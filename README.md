@@ -1,8 +1,38 @@
 # codex.nvim
 
-Neovim integration for the Codex CLI.
+<p align="center">
+  <img src="assets/demo.gif" alt="codex.nvim demo" width="900" />
+</p>
 
-`codex.nvim` keeps one persistent Codex terminal session alive and lets you view it as either a centered float or a left, right, or bottom panel. Float and panel are mutually exclusive views over the same terminal buffer, so switching layouts does not start a second Codex process.
+<p align="center">
+  <strong>Neovim integration for the Codex CLI.</strong>
+</p>
+
+<p align="center">
+  <code>codex.nvim</code> keeps one persistent Codex terminal session alive and lets you view it as either a centered float or a left, right, or bottom panel.
+</p>
+
+<p align="center">
+  Float and panel are mutually exclusive views over the same terminal buffer, so switching layouts does not start a second Codex process.
+</p>
+
+<p align="center">
+  <a href="#install">Install</a> ·
+  <a href="#configuration">Configuration</a> ·
+  <a href="#how-it-works">How It Works</a> ·
+  <a href="#lua-api">Lua API</a> ·
+  <a href="#command-reference">Command Reference</a>
+</p>
+
+## At a Glance
+
+<table>
+  <tr>
+    <td><strong>One session</strong><br />Keeps a single Codex process alive and reuses it across views.</td>
+    <td><strong>Multiple layouts</strong><br />Switch between float and panel without spawning a second terminal.</td>
+    <td><strong>Lightweight context</strong><br />Send buffer, selection, and diagnostics metadata without dumping full contents.</td>
+  </tr>
+</table>
 
 ## Requirements
 
