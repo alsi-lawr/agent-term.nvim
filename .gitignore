@@ -1,0 +1,19 @@
+# Local logs
+*.log
+nvim.log
+
+# Neovim local state
+.nvim.lua
+.nvimrc
+
+# Editor and OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Test and coverage output
+coverage/
+.luacov
+.luacov.stats.out
