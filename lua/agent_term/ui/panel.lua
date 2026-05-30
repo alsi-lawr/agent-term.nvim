@@ -1,9 +1,9 @@
-local config = require("codex.config")
-local enums = require("codex.enums")
-local state = require("codex.runtime.state")
+local config = require("agent_term.config")
+local enums = require("agent_term.enums")
+local state = require("agent_term.runtime.state")
 
 local M = {}
-local augroup = vim.api.nvim_create_augroup("codex_panel", { clear = true })
+local augroup = vim.api.nvim_create_augroup("agent_term_panel", { clear = true })
 
 local function size_from(value, total)
 	if value > 0 and value <= 1 then

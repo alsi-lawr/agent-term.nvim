@@ -1,6 +1,6 @@
 local M = {}
 local applied_maps = {}
-local setup_keymaps = require("codex.setup.keymaps")
+local setup_keymaps = require("agent_term.setup.keymaps")
 
 ---@param name string
 ---@return boolean
@@ -15,7 +15,7 @@ function M.get_unknown_names(maps)
 end
 
 function M.setup(api)
-	local config = require("codex.config")
+	local config = require("agent_term.config")
 	local maps = config.options.keymaps or {}
 
 	for _, applied in ipairs(applied_maps) do
@@ -25,7 +25,8 @@ function M.setup(api)
 
 	for _, spec in ipairs(setup_keymaps.specs) do
 		local key = maps[spec[1]]
-		if key then
+		local resume_kind = spec[5]
+		if key and (resume_kind == nil or config.has_resume(resume_kind)) then
 			vim.keymap.set(spec[2], key, api[spec[3]], { desc = spec[4] })
 			applied_maps[#applied_maps + 1] = { mode = spec[2], lhs = key }
 		end

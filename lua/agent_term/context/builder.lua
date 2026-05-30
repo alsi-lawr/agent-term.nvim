@@ -1,5 +1,5 @@
-local config = require("codex.config")
-local diagnostics = require("codex.context.diagnostics")
+local config = require("agent_term.config")
+local diagnostics = require("agent_term.context.diagnostics")
 
 local M = {}
 

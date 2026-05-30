@@ -1,17 +1,19 @@
-local enums = require("codex.enums")
-local keymaps = require("codex.setup.keymaps")
-local notify = require("codex.notify")
-local schema = require("codex.setup.schema")
+local enums = require("agent_term.enums")
+local keymaps = require("agent_term.setup.keymaps")
+local notify = require("agent_term.notify")
+local schema = require("agent_term.setup.schema")
 
 local M = {}
 local CONTEXT_TARGET_DEFAULT = "default"
 
 M.defaults = {
-	codex = {
+	agent = {
 		cmd = { "codex" },
-		resume = { "codex", "resume" },
-		resume_all = { "codex", "resume", "--all" },
-		resume_last = { "codex", "resume", "--last" },
+		resume = {
+			default = { "codex", "resume" },
+			all = { "codex", "resume", "--all" },
+			last = { "codex", "resume", "--last" },
+		},
 	},
 	float = {
 		width = 0.85,
@@ -35,7 +37,8 @@ M.defaults = {
 }
 
 local known_top_level = {
-	codex = true,
+	agent = true,
+	backend = true,
 	float = true,
 	panel = true,
 	context = true,
@@ -43,11 +46,9 @@ local known_top_level = {
 }
 
 local known_nested = {
-	codex = {
+	agent = {
 		cmd = true,
 		resume = true,
-		resume_all = true,
-		resume_last = true,
 	},
 	float = {
 		width = true,
@@ -69,6 +70,12 @@ local known_nested = {
 	},
 }
 
+local known_resume = {
+	default = true,
+	all = true,
+	last = true,
+}
+
 ---@param known table<string, boolean>
 ---@return fun(name: string): boolean
 local function is_known_name(known)
@@ -88,13 +95,20 @@ local function warn_and_strip(target, unknown, message)
 	schema.strip_unknown_names(target, unknown)
 end
 
----@param validated codex.Config
+local function merge_backend_alias(validated)
+	if validated.agent == nil and type(validated.backend) == "table" then
+		validated.agent = vim.deepcopy(validated.backend)
+	end
+	validated.backend = nil
+end
+
+---@param validated agent_term.Config
 local function validate_top_level_keys(validated)
 	local unknown = schema.get_unknown_names(validated, is_known_name(known_top_level))
 	warn_and_strip(
 		validated,
 		unknown,
-		("Unknown codex.nvim config keys ignored: %s"):format(table.concat(unknown, ", "))
+		("Unknown agent-term.nvim config keys ignored: %s"):format(table.concat(unknown, ", "))
 	)
 end
 
@@ -110,21 +124,25 @@ local function validate_nested_section(section_opts, section, known)
 	warn_and_strip(
 		section_opts,
 		unknown,
-		("Unknown codex.nvim config keys ignored in `%s`: %s"):format(
+		("Unknown agent-term.nvim config keys ignored in `%s`: %s"):format(
 			section,
 			table.concat(unknown, ", ")
 		)
 	)
 end
 
----@param validated codex.Config
+---@param validated agent_term.Config
 local function validate_nested_keys(validated)
 	for section, known in pairs(known_nested) do
 		validate_nested_section(validated[section], section, known)
 	end
+
+	if type(validated.agent) == "table" and type(validated.agent.resume) == "table" then
+		validate_nested_section(validated.agent.resume, "agent.resume", known_resume)
+	end
 end
 
----@param validated codex.Config
+---@param validated agent_term.Config
 local function validate_keymap_names(validated)
 	if type(validated.keymaps) ~= "table" then
 		return
@@ -134,28 +152,50 @@ local function validate_keymap_names(validated)
 	warn_and_strip(
 		validated.keymaps,
 		unknown,
-		("Unknown codex.nvim keymaps ignored: %s"):format(table.concat(unknown, ", "))
+		("Unknown agent-term.nvim keymaps ignored: %s"):format(table.concat(unknown, ", "))
 	)
 end
 
----@param user_opts codex.Config
----@return codex.Config
+---@param user_opts agent_term.Config
+---@return agent_term.Config
 function M.validate_schema(user_opts)
 	local validated = vim.deepcopy(user_opts)
+	merge_backend_alias(validated)
 	validate_top_level_keys(validated)
 	validate_nested_keys(validated)
 	validate_keymap_names(validated)
 	return validated
 end
 
----@param user_opts? codex.Config
----@return codex.Config
+local function fill_resume_capabilities(options)
+	if type(options.agent.resume) ~= "table" then
+		return
+	end
+	for _, key in ipairs({ "default", "all", "last" }) do
+		if options.agent.resume[key] == nil then
+			options.agent.resume[key] = false
+		end
+	end
+end
+
+---@param user_opts? agent_term.Config
+---@return agent_term.Config
 function M.build_options(user_opts)
 	local validated = user_opts
 	if type(user_opts) == "table" then
 		validated = M.validate_schema(user_opts)
 	end
-	return vim.tbl_deep_extend("force", vim.deepcopy(M.defaults), validated or {})
+	local defaults = vim.deepcopy(M.defaults)
+	if
+		type(validated) == "table"
+		and type(validated.agent) == "table"
+		and type(validated.agent.resume) == "table"
+	then
+		defaults.agent.resume = {}
+	end
+	local options = vim.tbl_deep_extend("force", defaults, validated or {})
+	fill_resume_capabilities(options)
+	return options
 end
 
 return M

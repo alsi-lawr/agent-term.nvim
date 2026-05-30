@@ -1,13 +1,13 @@
-local commands = require("codex.commands")
-local config = require("codex.config")
-local context = require("codex.context.builder")
-local enums = require("codex.enums")
-local float = require("codex.ui.float")
-local keymaps = require("codex.keymaps")
-local notify = require("codex.notify")
-local panel = require("codex.ui.panel")
-local state = require("codex.runtime.state")
-local terminal = require("codex.runtime.session")
+local commands = require("agent_term.commands")
+local config = require("agent_term.config")
+local context = require("agent_term.context.builder")
+local enums = require("agent_term.enums")
+local float = require("agent_term.ui.float")
+local keymaps = require("agent_term.keymaps")
+local notify = require("agent_term.notify")
+local panel = require("agent_term.ui.panel")
+local state = require("agent_term.runtime.state")
+local terminal = require("agent_term.runtime.session")
 
 local M = {}
 local CONTEXT_TARGET_DEFAULT = "default"
@@ -18,7 +18,7 @@ end
 
 local function open_view(view, opts)
 	opts = opts or {}
-	local buf = terminal.ensure_session(config.options.codex.cmd)
+	local buf = terminal.ensure_session(config.options.agent.cmd)
 	if not buf then
 		return false
 	end
@@ -67,11 +67,11 @@ local function send_context(builder)
 	end
 
 	if not terminal.send(message) then
-		notify.error("Codex session is not running.")
+		notify.error("Agent session is not running.")
 		return
 	end
 
-	notify.info("Context sent to Codex.")
+	notify.info("Context sent to agent.")
 end
 
 local function attach_view_api(prefix, view_name, view_mod, is_open_fn)
@@ -141,23 +141,33 @@ end
 
 ---@return nil
 function M.resume()
-	resume_with(enums.resume_kind.RESUME)
+	resume_with(enums.resume_kind.DEFAULT)
 end
 
 ---@return nil
 function M.resume_all()
-	resume_with(enums.resume_kind.RESUME_ALL)
+	resume_with(enums.resume_kind.ALL)
 end
 
 ---@return nil
 function M.resume_last()
-	resume_with(enums.resume_kind.RESUME_LAST)
+	resume_with(enums.resume_kind.LAST)
 end
 
 attach_view_api(enums.view.FLOAT, enums.view.FLOAT, float, state.has_valid_float_win)
 attach_view_api(enums.view.PANEL, enums.view.PANEL, panel, state.has_valid_panel_win)
 
----@param opts? codex.Config
+M.open = M.float_open
+M.toggle = M.float_toggle
+M.focus = M.float_focus
+
+---@param kind "default"|"all"|"last"
+---@return boolean
+function M.has_resume(kind)
+	return config.has_resume(kind)
+end
+
+---@param opts? agent_term.Config
 ---@return nil
 function M.setup(opts)
 	config.setup(opts)

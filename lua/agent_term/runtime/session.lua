@@ -1,10 +1,9 @@
-local config = require("codex.config")
-local enums = require("codex.enums")
-local notify = require("codex.notify")
-local state = require("codex.runtime.state")
+local config = require("agent_term.config")
+local notify = require("agent_term.notify")
+local state = require("agent_term.runtime.state")
 
 local M = {}
-local augroup = vim.api.nvim_create_augroup("codex_terminal", { clear = true })
+local augroup = vim.api.nvim_create_augroup("agent_term_terminal", { clear = true })
 
 local function command_name(cmd)
 	if type(cmd) ~= "table" or #cmd == 0 then
@@ -70,9 +69,9 @@ function M.ensure_session(cmd)
 		state.reset_terminal()
 	end
 
-	local run_cmd = cmd or config.options.codex.cmd
+	local run_cmd = cmd or config.options.agent.cmd
 	if not can_run_cmd(run_cmd) then
-		notify.error(("Codex command not found: %s"):format(command_name(run_cmd)))
+		notify.error(("Agent command not found: %s"):format(command_name(run_cmd)))
 		return nil
 	end
 
@@ -92,7 +91,7 @@ function M.ensure_session(cmd)
 	end)
 
 	if not (job_id and job_id > 0) then
-		notify.error(("Failed to start Codex command: %s"):format(table.concat(run_cmd, " ")))
+		notify.error(("Failed to start agent command: %s"):format(table.concat(run_cmd, " ")))
 		delete_buf_if_valid(buf)
 		state.reset_terminal()
 		return nil
@@ -136,19 +135,13 @@ end
 
 function M.start_resume(kind)
 	if state.has_running_job() then
-		notify.warn("Codex session is already running. Run :CodexKill first.")
+		notify.warn("Agent session is already running. Run :AgentTermKill first.")
 		return nil
 	end
 
-	local commands = {
-		[enums.resume_kind.RESUME] = config.options.codex.resume,
-		[enums.resume_kind.RESUME_ALL] = config.options.codex.resume_all,
-		[enums.resume_kind.RESUME_LAST] = config.options.codex.resume_last,
-	}
-
-	local cmd = commands[kind]
+	local cmd = config.resume_command(kind)
 	if not cmd then
-		notify.error(("Unknown resume command kind: %s"):format(tostring(kind)))
+		notify.error(("Resume capability is not configured: %s"):format(tostring(kind)))
 		return nil
 	end
 

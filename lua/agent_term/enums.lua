@@ -12,9 +12,9 @@ M.panel_position = {
 }
 
 M.resume_kind = {
-	RESUME = "resume",
-	RESUME_ALL = "resume_all",
-	RESUME_LAST = "resume_last",
+	DEFAULT = "default",
+	ALL = "all",
+	LAST = "last",
 }
 
 return M

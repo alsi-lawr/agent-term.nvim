@@ -1,7 +1,7 @@
 local M = {}
 
 local function send(msg, level)
-	vim.notify(msg, level, { title = "codex.nvim" })
+	vim.notify(msg, level, { title = "agent-term.nvim" })
 end
 
 function M.info(msg)

@@ -1,8 +1,8 @@
-local config = require("codex.config")
-local state = require("codex.runtime.state")
+local config = require("agent_term.config")
+local state = require("agent_term.runtime.state")
 
 local M = {}
-local augroup = vim.api.nvim_create_augroup("codex_float", { clear = true })
+local augroup = vim.api.nvim_create_augroup("agent_term_float", { clear = true })
 
 local function clamp(value, min_value, max_value)
 	return math.max(min_value, math.min(value, max_value))
