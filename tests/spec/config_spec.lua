@@ -22,12 +22,12 @@ describe("Given configuration setup", function()
 		local opts = config.setup()
 
 		assert.are.same({ "codex" }, opts.agent.cmd)
-		assert.are.equal("hook", opts.agent.context.mode)
-		assert.are.equal("UserPromptSubmit", opts.agent.context.hook_event)
+		assert.are.equal("paste", opts.agent.context.mode)
 		assert.are.same({ "codex", "resume" }, opts.agent.resume.default)
 		assert.are.same({ "codex", "resume", "--all" }, opts.agent.resume.all)
 		assert.are.same({ "codex", "resume", "--last" }, opts.agent.resume.last)
 		assert.are.equal("right", opts.panel.position)
+		assert.are.equal(".agent-term/context.json", opts.context.file_path)
 		assert.are.equal("default", opts.context.target_view)
 		assert.is_false(opts.keymaps)
 	end)
@@ -111,8 +111,7 @@ describe("Given configuration setup", function()
 		})
 
 		assert.are.same({ "claude" }, opts.agent.cmd)
-		assert.are.equal("hook", opts.agent.context.mode)
-		assert.are.equal("UserPromptSubmit", opts.agent.context.hook_event)
+		assert.are.equal("paste", opts.agent.context.mode)
 		assert.are.same({ "claude", "--resume" }, opts.agent.resume.default)
 		assert.is_false(opts.agent.resume.all)
 		assert.are.same({ "claude", "--continue" }, opts.agent.resume.last)
@@ -133,8 +132,7 @@ describe("Given configuration setup", function()
 			})
 
 			assert.are.same({ "codex", "--model", "gpt-5.4-mini" }, opts.agent.cmd)
-			assert.are.equal("hook", opts.agent.context.mode)
-			assert.are.equal("UserPromptSubmit", opts.agent.context.hook_event)
+			assert.are.equal("paste", opts.agent.context.mode)
 			assert.are.same({ "codex", "resume" }, opts.agent.resume.default)
 			assert.is_false(opts.agent.resume.all)
 			assert.are.same({ "codex", "resume", "--last" }, opts.agent.resume.last)
@@ -209,7 +207,6 @@ describe("Given configuration setup", function()
 					cmd = { "custom-agent" },
 					context = {
 						mode = "hook",
-						hook_event = "UserPromptSubmit",
 					},
 					resume = {
 						default = { "custom-agent", "resume" },
@@ -219,7 +216,6 @@ describe("Given configuration setup", function()
 
 			assert.are.same({ "custom-agent" }, opts.agent.cmd)
 			assert.are.equal("hook", opts.agent.context.mode)
-			assert.are.equal("UserPromptSubmit", opts.agent.context.hook_event)
 			assert.are.same({ "custom-agent", "resume" }, opts.agent.resume.default)
 			assert.is_false(opts.agent.resume.all)
 			assert.is_false(opts.agent.resume.last)
@@ -299,7 +295,6 @@ describe("Given configuration setup", function()
 				},
 				context = {
 					mode = "silent",
-					hook_event = {},
 				},
 			},
 			float = {
@@ -310,6 +305,7 @@ describe("Given configuration setup", function()
 				height = "large",
 			},
 			context = {
+				file_path = {},
 				target_view = "side",
 				include_cursor = "yes",
 			},
@@ -317,8 +313,8 @@ describe("Given configuration setup", function()
 
 		assert.are.same({ "codex" }, opts.agent.cmd)
 		assert.are.same({ "codex", "resume" }, opts.agent.resume.default)
-		assert.are.equal("hook", opts.agent.context.mode)
-		assert.are.equal("UserPromptSubmit", opts.agent.context.hook_event)
+		assert.are.equal("paste", opts.agent.context.mode)
+		assert.are.equal(".agent-term/context.json", opts.context.file_path)
 		assert.are.equal(0.85, opts.float.width)
 		assert.are.equal("right", opts.panel.position)
 		assert.are.equal(0.35, opts.panel.height)

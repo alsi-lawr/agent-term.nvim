@@ -36,9 +36,9 @@ Plain custom commands do not inherit preset resume or hook-context behavior. For
 
 | Preset | Command | Context mode | Resume default | Resume all | Resume last |
 | --- | --- | --- | --- | --- | --- |
-| `codex` | `{ "codex" }` | hook | `{ "codex", "resume" }` | `{ "codex", "resume", "--all" }` | `{ "codex", "resume", "--last" }` |
+| `codex` | `{ "codex" }` | paste; native hook install supported | `{ "codex", "resume" }` | `{ "codex", "resume", "--all" }` | `{ "codex", "resume", "--last" }` |
 | `gemini` | `{ "gemini" }` | paste | `{ "gemini", "-r" }` | `false` | `{ "gemini", "-r", "latest" }` |
-| `claude` | `{ "claude" }` | hook | `{ "claude", "--resume" }` | `false` | `{ "claude", "--continue" }` |
+| `claude` | `{ "claude" }` | paste; native hook install supported | `{ "claude", "--resume" }` | `false` | `{ "claude", "--continue" }` |
 | `aider` | `{ "aider" }` | paste | `{ "aider", "--restore-chat-history" }` | `false` | `false` |
 | `copilot` | `{ "copilot" }` | paste | `{ "copilot", "--resume" }` | `false` | `{ "copilot", "--continue" }` |
 | `opencode` | `{ "opencode" }` | paste | `false` | `false` | `{ "opencode", "--continue" }` |
@@ -50,17 +50,60 @@ registered.
 
 Paste mode sends context text to the running terminal channel with `nvim_chan_send`.
 
-Hook mode emits a Neovim `User` autocmd and provides the context as
-`args.data.hookSpecificOutput.additionalContext`. A receiver must call `args.data.ack()` to
-acknowledge delivery. If no receiver acknowledges the payload, agent-term.nvim falls back to paste
-mode.
+Hook mode writes the latest context command payload to `context.file_path` (default:
+`.agent-term/context.json`) and does not paste anything into the terminal. A native agent hook reads
+that file during the agent's `UserPromptSubmit` event and returns it as `additionalContext`.
 
-Codex and Claude use hook mode by default because they support this context-injection path. Copilot
-and Opencode use paste mode even when they expose their own hook concepts, because those hooks are
-not compatible with this context-injection path.
+Codex and Claude can use hook mode after you install native hooks. Gemini, Aider, Copilot, and
+Opencode use paste mode unless a verified native context-injection hook installer is added.
 
 Hook mode is backend-driven, not view-driven. It applies from float, panel, and source-window
 context commands when configured.
+
+## Native Hook Installation
+
+Run `:AgentTermInstallHooks` after selecting a supported agent. Installation is explicit; normal
+`setup()` never writes agent hook files.
+
+The install command enables `agent.context.mode = "hook"` for the current Neovim session after it
+writes the hook files. To persist hook mode across restarts, install the hooks once and configure:
+
+```lua
+require("agent_term").setup({
+  agent = {
+    preset = "codex", -- or "claude"
+    context = { mode = "hook" },
+  },
+})
+```
+
+Codex writes:
+
+- `.codex/hooks.json`
+- `.codex/hooks/agent_term_context.py`
+
+The Codex hook is registered for `UserPromptSubmit`. It reads `.agent-term/context.json` and emits:
+
+```json
+{
+  "hookSpecificOutput": {
+    "hookEventName": "UserPromptSubmit",
+    "additionalContext": "..."
+  }
+}
+```
+
+Claude writes:
+
+- `.claude/settings.json`
+- `.claude/hooks/agent_term_context.py`
+
+The Claude Code hook uses the same `UserPromptSubmit` `hookSpecificOutput.additionalContext` shape
+required by Claude Code hooks.
+
+To remove installed hooks, delete the matching `UserPromptSubmit` entry from `.codex/hooks.json` or
+`.claude/settings.json`, then delete the generated `agent_term_context.py` script. You can also
+delete `.agent-term/context.json`; it will be recreated when hook-mode context is sent again.
 
 ## Custom Resume Support
 

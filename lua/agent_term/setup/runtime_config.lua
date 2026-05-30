@@ -31,7 +31,6 @@ local M = {}
 
 ---@class agent_term.AgentContextConfig
 ---@field mode? "paste"|"hook"
----@field hook_event? string
 
 ---@class agent_term.FloatConfig
 ---@field width? number
@@ -44,6 +43,7 @@ local M = {}
 ---@field height? number
 
 ---@class agent_term.ContextConfig
+---@field file_path? string
 ---@field target_view? "default"|"float"|"panel"
 ---@field include_file_path? boolean
 ---@field include_filetype? boolean

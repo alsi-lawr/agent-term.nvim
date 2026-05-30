@@ -11,8 +11,9 @@ local function is_panel_focused()
 	return state.has_valid_panel_win() and vim.api.nvim_get_current_win() == state.panel_win
 end
 
+---@param kind "buffer"|"selection"|"diagnostics"
 ---@param builder fun(): string|nil, string|nil
-local function send_context(builder)
+local function send_context(kind, builder)
 	local message, err = builder()
 	if not message then
 		notify.info(err)
@@ -23,31 +24,32 @@ local function send_context(builder)
 		return
 	end
 
-	local sent, used_hook, hook_failed = submission.submit(message)
-	if hook_failed then
-		notify.warn("Failed to emit backend hook context; falling back to visible send.")
-	end
+	local sent, used_hook, hook_failure = submission.submit(message, kind)
 	if not sent then
+		if used_hook and hook_failure then
+			notify.error(("Failed to write backend hook context: %s"):format(hook_failure))
+			return
+		end
 		notify.error("Agent session is not running.")
 		return
 	end
 
 	if used_hook then
-		notify.info("Context captured for backend hook injection.")
+		notify.info("Context written for native agent hook injection.")
 		return
 	end
 	notify.info("Context sent to agent.")
 end
 
 function M.send_buffer_context()
-	send_context(function()
+	send_context("buffer", function()
 		return captured_context.resolve_message("buffer", context.buffer_message, is_panel_focused())
 	end)
 end
 
 ---@param opts? vim.api.keyset.create_user_command.command_args
 function M.send_selection_context(opts)
-	send_context(function()
+	send_context("selection", function()
 		return captured_context.resolve_message("selection", function()
 			return context.selection_message(opts)
 		end, is_panel_focused())
@@ -55,7 +57,7 @@ function M.send_selection_context(opts)
 end
 
 function M.send_diagnostics_context()
-	send_context(function()
+	send_context("diagnostics", function()
 		return captured_context.resolve_message(
 			"diagnostics",
 			context.diagnostics_message,

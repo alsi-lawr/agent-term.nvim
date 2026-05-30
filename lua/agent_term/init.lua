@@ -3,6 +3,7 @@ local config = require("agent_term.setup.runtime_config")
 local captured_context = require("agent_term.context.captured")
 local context_commands = require("agent_term.context.commands")
 local enums = require("agent_term.enums")
+local hooks = require("agent_term.hooks")
 local keymaps = require("agent_term.setup.applied_keymaps")
 local resume = require("agent_term.runtime.resume")
 local terminal = require("agent_term.runtime.session")
@@ -53,6 +54,7 @@ end
 M.send_buffer_context = context_commands.send_buffer_context
 M.send_selection_context = context_commands.send_selection_context
 M.send_diagnostics_context = context_commands.send_diagnostics_context
+M.install_hooks = hooks.install
 M.resume = resume.resume_default
 M.resume_all = resume.resume_all
 M.resume_last = resume.resume_last

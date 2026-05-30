@@ -10,8 +10,7 @@ M.agent_presets = {
 	codex = {
 		cmd = { "codex" },
 		context = {
-			mode = "hook",
-			hook_event = "UserPromptSubmit",
+			mode = "paste",
 		},
 		resume = {
 			default = { "codex", "resume" },
@@ -33,8 +32,7 @@ M.agent_presets = {
 	claude = {
 		cmd = { "claude" },
 		context = {
-			mode = "hook",
-			hook_event = "UserPromptSubmit",
+			mode = "paste",
 		},
 		resume = {
 			default = { "claude", "--resume" },
@@ -90,6 +88,7 @@ M.defaults = {
 		height = 0.35,
 	},
 	context = {
+		file_path = ".agent-term/context.json",
 		target_view = CONTEXT_TARGET_DEFAULT,
 		include_file_path = true,
 		include_filetype = true,
@@ -127,6 +126,7 @@ local known_nested = {
 		height = true,
 	},
 	context = {
+		file_path = true,
 		target_view = true,
 		include_file_path = true,
 		include_filetype = true,
@@ -144,7 +144,6 @@ local known_resume = {
 
 local known_agent_context = {
 	mode = true,
-	hook_event = true,
 }
 
 local valid_context_targets = {
@@ -446,13 +445,6 @@ local function validate_agent_values(validated)
 			is_known_value(valid_agent_context_modes),
 			"`paste` or `hook`"
 		)
-		strip_invalid_field(
-			validated.agent.context,
-			"hook_event",
-			"agent.context.hook_event",
-			is_string,
-			"a non-empty string"
-		)
 		if is_empty_table(validated.agent.context) then
 			validated.agent.context = nil
 		end
@@ -482,6 +474,13 @@ local function validate_option_values(validated)
 	end
 
 	if type(validated.context) == "table" then
+		strip_invalid_field(
+			validated.context,
+			"file_path",
+			"context.file_path",
+			is_string,
+			"a non-empty string"
+		)
 		strip_invalid_field(
 			validated.context,
 			"target_view",

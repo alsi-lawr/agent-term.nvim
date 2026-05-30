@@ -33,6 +33,7 @@ local COMMAND_SPECS = {
 		"Send diagnostics context to Agent Term",
 		{},
 	},
+	{ "AgentTermInstallHooks", "install_hooks", "Install native agent hooks", {} },
 
 	{ "AgentTermResume", "resume", "Start resume session", {}, enums.resume_kind.DEFAULT },
 	{ "AgentTermResumeAll", "resume_all", "Start resume --all session", {}, enums.resume_kind.ALL },

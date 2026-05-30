@@ -99,6 +99,7 @@ require("agent_term").setup({
     cmd = { "my-agent" },
   },
   context = {
+    file_path = ".agent-term/context.json",
     target_view = "default", -- "default" | "float" | "panel"
   },
 })
@@ -113,9 +114,9 @@ caveats are documented in [docs/backends.md](docs/backends.md).
 
 | Preset | Command | Context mode | Resume summary |
 | --- | --- | --- | --- |
-| `codex` | `codex` | hook | default, all, last |
+| `codex` | `codex` | paste; native hook install supported | default, all, last |
 | `gemini` | `gemini` | paste | default, last |
-| `claude` | `claude` | hook | default, last |
+| `claude` | `claude` | paste; native hook install supported | default, last |
 | `aider` | `aider` | paste | default |
 | `copilot` | `copilot` | paste | default, last |
 | `opencode` | `opencode` | paste | last |
@@ -146,6 +147,11 @@ Supported enum values are available at `require("agent_term.enums").agent`.
     <td><a href="#context-behaviour">Context behaviour</a></td>
   </tr>
   <tr>
+    <td>Install native agent hooks</td>
+    <td><code>:AgentTermInstallHooks</code></td>
+    <td><a href="docs/backends.md#native-hook-installation">Native hooks</a></td>
+  </tr>
+  <tr>
     <td>Switch backend preset</td>
     <td><code>agent = "claude"</code></td>
     <td><a href="docs/backends.md">Backend presets</a></td>
@@ -170,9 +176,14 @@ Context commands send lightweight editor metadata, not full buffer contents.
 - Selection context sends file path, filetype, and selected line range.
 - Diagnostics context sends compact diagnostics for the current buffer.
 
-Paste mode sends context to the running terminal job. Hook mode is an advanced backend capability:
-it emits a Neovim `User` autocmd and requires a receiver to acknowledge delivery. If hook delivery
-is not acknowledged, agent-term.nvim falls back to paste mode.
+Paste mode sends context to the running terminal job. Hook mode writes the latest captured context
+to `context.file_path` (default: `.agent-term/context.json`) and relies on an installed native agent
+hook to read that file during the agent's `UserPromptSubmit` lifecycle event. Run
+`:AgentTermInstallHooks` to install supported native hooks for the configured agent.
+
+Hook installation is explicit. Normal setup does not modify project or user agent config files.
+Codex and Claude are supported initially; Gemini, Aider, Copilot, and Opencode stay in paste mode
+unless you explicitly configure a verified native hook integration.
 
 If the agent is not running, context commands open the configured `context.target_view`. The default
 target reuses an open panel when one exists, otherwise it opens a float.
@@ -186,6 +197,7 @@ target reuses an open panel when one exists, otherwise it opens a float.
 - `:AgentTermSendBufferContext`: send lightweight metadata for the current buffer.
 - `:AgentTermSendSelectionContext`: send lightweight metadata for the selected range.
 - `:AgentTermSendDiagnosticsContext`: send compact diagnostics for the current buffer.
+- `:AgentTermInstallHooks`: install project-local native hooks for supported agents.
 - `:AgentTermResume`, `:AgentTermResumeAll`, `:AgentTermResumeLast`: registered only when the
   configured backend supports that resume capability.
 
@@ -200,8 +212,8 @@ with `Panel`.
 - No selection context: reselect text or run `:'<,'>AgentTermSendSelectionContext`.
 - Resume command missing: the preset or custom config does not support that resume capability.
 - Resume refused: a session is already running; run `:AgentTermKill` first.
-- Context appears in the terminal: the backend is using paste mode, or hook delivery was not
-  acknowledged.
+- Context appears in the terminal: the backend is using paste mode. Install native hooks and enable
+  `agent.context.mode = "hook"` to use file-backed native hook context.
 
 ## Advanced Docs
 

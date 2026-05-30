@@ -19,6 +19,7 @@ describe("Given Agent Term command registration", function()
 			send_buffer_context = function() end,
 			send_selection_context = function() end,
 			send_diagnostics_context = function() end,
+			install_hooks = function() end,
 			resume = function() end,
 			resume_all = function() end,
 			resume_last = function() end,
@@ -34,6 +35,7 @@ describe("Given Agent Term command registration", function()
 			"AgentTermResume",
 			"AgentTermResumeAll",
 			"AgentTermResumeLast",
+			"AgentTermInstallHooks",
 		}
 		for _, command in ipairs(commands) do
 			pcall(vim.api.nvim_del_user_command, command)

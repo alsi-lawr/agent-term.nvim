@@ -8,13 +8,19 @@ describe("Given panel silent context injection", function()
 	local terminal_buf
 	local sent_messages
 	local notifications
-	local last_hook_payload
-	local hook_augroup
+	local original_cwd
+	local temp_dir
 
 	local function close_if_valid(win)
 		if win and vim.api.nvim_win_is_valid(win) then
 			pcall(vim.api.nvim_win_close, win, true)
 		end
+	end
+
+	local function read_context_file()
+		local path = temp_dir .. "/.agent-term/context.json"
+		local lines = vim.fn.readfile(path)
+		return vim.json.decode(table.concat(lines, "\n"))
 	end
 
 	before_each(function()
@@ -32,9 +38,10 @@ describe("Given panel silent context injection", function()
 				notifications[#notifications + 1] = { level = "error", msg = msg }
 			end,
 		}
-		hook_augroup = vim.api.nvim_create_augroup("agent_term_test_hook_receiver", {
-			clear = true,
-		})
+		original_cwd = vim.fn.getcwd()
+		temp_dir = vim.fn.tempname()
+		vim.fn.mkdir(temp_dir, "p")
+		vim.cmd.cd(vim.fn.fnameescape(temp_dir))
 
 		source_buf = vim.api.nvim_create_buf(true, false)
 		terminal_buf = vim.api.nvim_create_buf(false, true)
@@ -65,13 +72,17 @@ describe("Given panel silent context injection", function()
 
 		plugin = require("agent_term")
 		state = require("agent_term.runtime.state")
-		last_hook_payload = nil
 	end)
 
 	after_each(function()
-		pcall(vim.api.nvim_del_augroup_by_id, hook_augroup)
 		close_if_valid(state and state.float_win)
 		close_if_valid(state and state.panel_win)
+		if original_cwd then
+			vim.cmd.cd(vim.fn.fnameescape(original_cwd))
+		end
+		if temp_dir then
+			vim.fn.delete(temp_dir, "rf")
+		end
 		if source_buf and vim.api.nvim_buf_is_valid(source_buf) then
 			pcall(vim.api.nvim_buf_delete, source_buf, { force = true })
 		end
@@ -80,17 +91,6 @@ describe("Given panel silent context injection", function()
 		end
 		reload.clear_agent_term_modules()
 	end)
-
-	local function install_hook_receiver()
-		vim.api.nvim_create_autocmd("User", {
-			group = hook_augroup,
-			pattern = "UserPromptSubmit",
-			callback = function(args)
-				last_hook_payload = args.data
-				args.data.ack()
-			end,
-		})
-	end
 
 	it("When panel opens Then it captures buffer context before current buffer changes", function()
 		plugin.setup({ context = { target_view = "panel" } })
@@ -115,7 +115,6 @@ describe("Given panel silent context injection", function()
 			agent = {
 				context = {
 					mode = "paste",
-					hook_event = "UserPromptSubmit",
 				},
 			},
 		})
@@ -177,7 +176,6 @@ describe("Given panel silent context injection", function()
 				agent = {
 					context = {
 						mode = "paste",
-						hook_event = "UserPromptSubmit",
 					},
 				},
 			})
@@ -330,14 +328,12 @@ describe("Given panel silent context injection", function()
 		assert.is_not_nil(sent_messages[1]:match("test: note"))
 	end)
 
-	it("When hook mode is enabled Then context is not visibly pasted into panel", function()
-		install_hook_receiver()
+	it("When hook mode is enabled Then context is written instead of visibly pasted", function()
 		plugin.setup({
 			context = { target_view = "panel" },
 			agent = {
 				context = {
 					mode = "hook",
-					hook_event = "UserPromptSubmit",
 				},
 			},
 		})
@@ -346,21 +342,17 @@ describe("Given panel silent context injection", function()
 		plugin.send_buffer_context()
 
 		assert.are.equal(0, #sent_messages)
-		assert.is_not_nil(last_hook_payload)
-		assert.is_not_nil(last_hook_payload.hookSpecificOutput)
-		assert.are.equal("UserPromptSubmit", last_hook_payload.hookSpecificOutput.hookEventName)
-		assert.is_not_nil(
-			last_hook_payload.hookSpecificOutput.additionalContext:match("file: /tmp/panel%-source%.lua")
-		)
+		local payload = read_context_file()
+		assert.are.equal(1, payload.version)
+		assert.are.equal("buffer", payload.kind)
+		assert.is_not_nil(payload.content:match("file: /tmp/panel%-source%.lua"))
 	end)
 
-	it("When hook mode starts a default float Then context is emitted through the hook", function()
-		install_hook_receiver()
+	it("When hook mode starts a default float Then source context is written", function()
 		plugin.setup({
 			agent = {
 				context = {
 					mode = "hook",
-					hook_event = "UserPromptSubmit",
 				},
 			},
 		})
@@ -370,22 +362,18 @@ describe("Given panel silent context injection", function()
 		plugin.send_buffer_context()
 
 		assert.are.equal(0, #sent_messages)
-		assert.is_not_nil(last_hook_payload)
-		assert.is_not_nil(
-			last_hook_payload.hookSpecificOutput.additionalContext:match("file: /tmp/panel%-source%.lua")
-		)
+		local payload = read_context_file()
+		assert.is_not_nil(payload.content:match("file: /tmp/panel%-source%.lua"))
 	end)
 
 	it(
-		"When hook mode has a panel open but source is focused Then context is emitted through the hook",
+		"When hook mode has a panel open but source is focused Then current source context is written",
 		function()
-			install_hook_receiver()
 			plugin.setup({
 				context = { target_view = "panel" },
 				agent = {
 					context = {
 						mode = "hook",
-						hook_event = "UserPromptSubmit",
 					},
 				},
 			})
@@ -401,69 +389,34 @@ describe("Given panel silent context injection", function()
 			plugin.send_buffer_context()
 
 			assert.are.equal(0, #sent_messages)
-			assert.is_not_nil(last_hook_payload)
-			assert.is_not_nil(
-				last_hook_payload.hookSpecificOutput.additionalContext:match("file: /tmp/hook%-source%.lua")
-			)
-			assert.is_nil(
-				last_hook_payload.hookSpecificOutput.additionalContext:match(
-					"file: /tmp/panel%-source%.lua"
-				)
-			)
+			local payload = read_context_file()
+			assert.is_not_nil(payload.content:match("file: /tmp/hook%-source%.lua"))
+			assert.is_nil(payload.content:match("file: /tmp/panel%-source%.lua"))
 
 			pcall(vim.api.nvim_buf_delete, other_buf, { force = true })
 		end
 	)
 
-	it("When hook mode has no receiver Then panel context falls back to visible send", function()
-		plugin.setup({
-			context = { target_view = "panel" },
-			agent = {
-				context = {
-					mode = "hook",
-					hook_event = "UserPromptSubmit",
-				},
-			},
-		})
-		plugin.panel_open()
-
-		plugin.send_buffer_context()
-
-		assert.are.equal(1, #sent_messages)
-		assert.is_not_nil(sent_messages[1]:match("file: /tmp/panel%-source%.lua"))
-		assert.is_nil(last_hook_payload)
-		assert.are.equal("warn", notifications[#notifications - 1].level)
-		assert.is_not_nil(
-			notifications[#notifications - 1].msg:match("Failed to emit backend hook context")
-		)
-	end)
-
 	it(
-		"When hook receiver does not acknowledge handling Then panel context falls back to visible send",
+		"When hook mode sends selection context from a panel Then captured selection is written",
 		function()
-			vim.api.nvim_create_autocmd("User", {
-				group = hook_augroup,
-				pattern = "UserPromptSubmit",
-				callback = function(args)
-					last_hook_payload = args.data
-				end,
-			})
 			plugin.setup({
 				context = { target_view = "panel" },
 				agent = {
 					context = {
 						mode = "hook",
-						hook_event = "UserPromptSubmit",
 					},
 				},
 			})
 			plugin.panel_open()
 
-			plugin.send_buffer_context()
+			plugin.send_selection_context({})
 
-			assert.are.equal(1, #sent_messages)
-			assert.is_not_nil(last_hook_payload)
-			assert.is_false(last_hook_payload.handled)
+			assert.are.equal(0, #sent_messages)
+			local payload = read_context_file()
+			assert.are.equal("selection", payload.kind)
+			assert.is_not_nil(payload.content:match("selection: lines 2%-4"))
+			assert.is_not_nil(payload.content:match("file: /tmp/panel%-source%.lua"))
 		end
 	)
 end)
