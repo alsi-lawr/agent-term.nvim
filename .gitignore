@@ -17,3 +17,4 @@ Thumbs.db
 coverage/
 .luacov
 .luacov.stats.out
+/.agent-term/

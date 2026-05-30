@@ -34,7 +34,7 @@ local COMMAND_SPECS = {
 		{},
 	},
 	{ "AgentTermInstallHooks", "install_hooks", "Install native agent hooks", {} },
-	{ "AgentTermIgnore", "ignore", "Add /.agent-term/ to .gitignore", {} },
+	{ "AgentTermIgnore", "ignore", "Add .agent-term/ to .gitignore", {} },
 
 	{ "AgentTermResume", "resume", "Start resume session", {}, enums.resume_kind.DEFAULT },
 	{ "AgentTermResumeAll", "resume_all", "Start resume --all session", {}, enums.resume_kind.ALL },

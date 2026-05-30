@@ -2,7 +2,7 @@ local notify = require("agent_term.notify")
 
 local M = {}
 
-local ENTRY = "/.agent-term/"
+local ENTRY = ".agent-term/"
 
 local function read_lines(path)
 	if vim.fn.filereadable(path) == 0 then
@@ -20,7 +20,7 @@ local function has_entry(lines)
 	return false
 end
 
-function M.ensure_agent_term_ignored()
+function M.ensure_ignored()
 	local path = ".gitignore"
 	local lines = read_lines(path)
 	if has_entry(lines) then
@@ -28,14 +28,14 @@ function M.ensure_agent_term_ignored()
 		return true
 	end
 
-	lines[#lines + 1] = "# Ignore agent-term context\n" .. ENTRY
+	lines[#lines + 1] = "# Ignore agent-term.nvim context\n" .. ENTRY
 	local ok = pcall(vim.fn.writefile, lines, path)
 	if not ok then
 		notify.error("Failed to update .gitignore")
 		return false
 	end
 
-	notify.info("Added `/.agent-term/` to .gitignore")
+	notify.info("Added `.agent-term/` to .gitignore")
 	return true
 end
 
