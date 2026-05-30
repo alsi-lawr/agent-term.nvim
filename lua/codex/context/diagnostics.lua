@@ -19,7 +19,14 @@ function M.format_for_buffer(bufnr)
 		local code = d.code and (" [" .. tostring(d.code) .. "]") or ""
 		local message = (d.message or ""):gsub("\n", " ")
 
-		out[#out + 1] = ("- line %d, col %d, %s, %s%s: %s"):format(line, col, severity, source, code, message)
+		out[#out + 1] = ("- line %d, col %d, %s, %s%s: %s"):format(
+			line,
+			col,
+			severity,
+			source,
+			code,
+			message
+		)
 	end
 
 	return out

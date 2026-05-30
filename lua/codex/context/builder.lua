@@ -1,5 +1,5 @@
 local config = require("codex.config")
-local diagnostics = require("codex.diagnostics")
+local diagnostics = require("codex.context.diagnostics")
 
 local M = {}
 

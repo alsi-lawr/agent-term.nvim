@@ -1,6 +1,6 @@
 local config = require("codex.config")
 local enums = require("codex.enums")
-local state = require("codex.state")
+local state = require("codex.runtime.state")
 
 local M = {}
 local augroup = vim.api.nvim_create_augroup("codex_panel", { clear = true })
