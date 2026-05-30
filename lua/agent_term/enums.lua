@@ -17,4 +17,11 @@ M.resume_kind = {
 	LAST = "last",
 }
 
+M.agent = {
+	CODEX = "codex",
+	GEMINI = "gemini",
+	CLAUDE = "claude",
+	AIDER = "aider",
+}
+
 return M

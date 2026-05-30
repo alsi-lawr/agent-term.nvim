@@ -6,8 +6,8 @@ local schema = require("agent_term.setup.schema")
 local M = {}
 local CONTEXT_TARGET_DEFAULT = "default"
 
-M.defaults = {
-	agent = {
+M.agent_presets = {
+	codex = {
 		cmd = { "codex" },
 		resume = {
 			default = { "codex", "resume" },
@@ -15,6 +15,34 @@ M.defaults = {
 			last = { "codex", "resume", "--last" },
 		},
 	},
+	gemini = {
+		cmd = { "gemini" },
+		resume = {
+			default = { "gemini", "-r" },
+			all = false,
+			last = { "gemini", "-r", "latest" },
+		},
+	},
+	claude = {
+		cmd = { "claude" },
+		resume = {
+			default = { "claude", "--resume" },
+			all = false,
+			last = { "claude", "--continue" },
+		},
+	},
+	aider = {
+		cmd = { "aider" },
+		resume = {
+			default = { "aider", "--restore-chat-history" },
+			all = false,
+			last = false,
+		},
+	},
+}
+
+M.defaults = {
+	agent = vim.deepcopy(M.agent_presets.codex),
 	float = {
 		width = 0.85,
 		height = 0.8,
@@ -47,6 +75,7 @@ local known_top_level = {
 
 local known_nested = {
 	agent = {
+		preset = true,
 		cmd = true,
 		resume = true,
 	},
@@ -96,10 +125,70 @@ local function warn_and_strip(target, unknown, message)
 end
 
 local function merge_backend_alias(validated)
-	if validated.agent == nil and type(validated.backend) == "table" then
+	if
+		validated.agent == nil
+		and (type(validated.backend) == "table" or type(validated.backend) == "string")
+	then
 		validated.agent = vim.deepcopy(validated.backend)
 	end
 	validated.backend = nil
+end
+
+local function known_presets()
+	local names = {}
+	for name, _ in pairs(M.agent_presets) do
+		names[#names + 1] = name
+	end
+	table.sort(names)
+	return table.concat(names, ", ")
+end
+
+---@param name string
+---@return table<string, any>|nil
+local function preset_by_name(name)
+	local preset = M.agent_presets[name]
+	if type(preset) ~= "table" then
+		return nil
+	end
+	return vim.deepcopy(preset)
+end
+
+---@param validated table<string, any>
+local function normalize_agent_shortcuts(validated)
+	if type(validated.agent) == "string" then
+		local preset = preset_by_name(validated.agent)
+		if preset then
+			validated.agent = preset
+		else
+			notify.warn(
+				("Unknown agent preset `%s`. Supported presets: %s"):format(
+					validated.agent,
+					known_presets()
+				)
+			)
+			validated.agent = nil
+		end
+		return
+	end
+
+	if type(validated.agent) ~= "table" or type(validated.agent.preset) ~= "string" then
+		return
+	end
+
+	local preset = preset_by_name(validated.agent.preset)
+	if not preset then
+		notify.warn(
+			("Unknown agent preset `%s`. Supported presets: %s"):format(
+				validated.agent.preset,
+				known_presets()
+			)
+		)
+		validated.agent.preset = nil
+		return
+	end
+
+	validated.agent.preset = nil
+	validated.agent = vim.tbl_deep_extend("force", preset, validated.agent)
 end
 
 ---@param validated agent_term.Config
@@ -161,6 +250,7 @@ end
 function M.validate_schema(user_opts)
 	local validated = vim.deepcopy(user_opts)
 	merge_backend_alias(validated)
+	normalize_agent_shortcuts(validated)
 	validate_top_level_keys(validated)
 	validate_nested_keys(validated)
 	validate_keymap_names(validated)

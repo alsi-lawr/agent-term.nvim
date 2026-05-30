@@ -3,14 +3,21 @@ local setup_config = require("agent_term.setup.config")
 local M = {}
 
 ---@class agent_term.Config
----@field agent? agent_term.AgentConfig
----@field backend? agent_term.AgentConfig
+---@field agent? agent_term.AgentConfig|agent_term.SupportedAgent
+---@field backend? agent_term.AgentConfig|agent_term.SupportedAgent
 ---@field float? agent_term.FloatConfig
 ---@field panel? agent_term.PanelConfig
 ---@field context? agent_term.ContextConfig
 ---@field keymaps? table<string, string|false|nil>|false
 
+---@alias agent_term.SupportedAgent
+---| "codex"
+---| "gemini"
+---| "claude"
+---| "aider"
+
 ---@class agent_term.AgentConfig
+---@field preset? agent_term.SupportedAgent
 ---@field cmd? string[]
 ---@field resume? false|agent_term.ResumeConfig
 

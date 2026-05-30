@@ -86,6 +86,79 @@ describe("Given configuration setup", function()
 		assert.is_false(config.has_resume("last"))
 	end)
 
+	it(
+		"When agent is set to a preset string Then that preset is expanded to backend defaults",
+		function()
+			local config = require("agent_term.config")
+			local opts = config.setup({
+				agent = "gemini",
+			})
+
+			assert.are.same({ "gemini" }, opts.agent.cmd)
+			assert.are.same({ "gemini", "-r" }, opts.agent.resume.default)
+			assert.is_false(opts.agent.resume.all)
+			assert.are.same({ "gemini", "-r", "latest" }, opts.agent.resume.last)
+		end
+	)
+
+	it("When agent is set from enum constants Then the matching preset is used", function()
+		local config = require("agent_term.config")
+		local enums = require("agent_term.enums")
+		local opts = config.setup({
+			agent = enums.agent.CLAUDE,
+		})
+
+		assert.are.same({ "claude" }, opts.agent.cmd)
+		assert.are.same({ "claude", "--resume" }, opts.agent.resume.default)
+		assert.is_false(opts.agent.resume.all)
+		assert.are.same({ "claude", "--continue" }, opts.agent.resume.last)
+	end)
+
+	it(
+		"When agent preset is configured as a table Then preset defaults are merged with overrides",
+		function()
+			local config = require("agent_term.config")
+			local opts = config.setup({
+				agent = {
+					preset = "codex",
+					cmd = { "codex", "--model", "gpt-5.4-mini" },
+					resume = {
+						all = false,
+					},
+				},
+			})
+
+			assert.are.same({ "codex", "--model", "gpt-5.4-mini" }, opts.agent.cmd)
+			assert.are.same({ "codex", "resume" }, opts.agent.resume.default)
+			assert.is_false(opts.agent.resume.all)
+			assert.are.same({ "codex", "resume", "--last" }, opts.agent.resume.last)
+		end
+	)
+
+	it("When backend is a preset string alias Then it maps to the same preset defaults", function()
+		local config = require("agent_term.config")
+		local opts = config.setup({
+			backend = "aider",
+		})
+
+		assert.are.same({ "aider" }, opts.agent.cmd)
+		assert.are.same({ "aider", "--restore-chat-history" }, opts.agent.resume.default)
+		assert.is_false(opts.agent.resume.all)
+		assert.is_false(opts.agent.resume.last)
+	end)
+
+	it("When an unknown preset is used Then a warning is shown and defaults are kept", function()
+		local config = require("agent_term.config")
+		local opts = config.setup({
+			agent = "not-real",
+		})
+
+		assert.are.same({ "codex" }, opts.agent.cmd)
+		assert.are.equal(1, #notifications)
+		assert.match("Unknown agent preset", notifications[1].msg)
+		assert.are.equal(vim.log.levels.WARN, notifications[1].level)
+	end)
+
 	it("When unknown keymaps are configured Then they are stripped and warned", function()
 		local config = require("agent_term.config")
 		local opts = config.setup({
