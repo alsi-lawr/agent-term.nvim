@@ -1,13 +1,13 @@
-Output assets/demo.gif
+Output docs/assets/demo.gif
 
 Set Shell "bash"
 Set FontSize 14
 Set Width 1200
 Set Height 720
 Set Padding 20
-Set Framerate 30
+Set Framerate 10 
 Set PlaybackSpeed 1.0
-Set TypingSpeed 75ms
+Set TypingSpeed 5ms
 Set Theme "Catppuccin Mocha"
 
 Hide
@@ -48,7 +48,7 @@ Sleep 3s
 Type "y"
 Enter
 Sleep 1.5s
-Type "/quit"
+Type@90ms "/quit"
 Enter
 Sleep 1.5s
 
@@ -65,9 +65,13 @@ Type@90ms ":AgentTermFloatOpen"
 Enter
 Sleep 4s
 
-Type@110ms "Briefly explain what this Lua file does. Do not edit files."
+Type@110ms "Briefly explain what this project does. Do not edit files."
 Enter
-Sleep 8s
+Sleep 1s
+Hide
+Sleep 5s
+Show
+Sleep 5s
 
 Escape
 Sleep 700ms
