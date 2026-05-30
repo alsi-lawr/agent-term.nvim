@@ -15,8 +15,18 @@ local COMMAND_SPECS = {
 	{ "CodexKill", "kill", "Kill Codex terminal session", {} },
 
 	{ "CodexSendBufferContext", "send_buffer_context", "Send buffer context to Codex", {} },
-	{ "CodexSendSelectionContext", "send_selection_context", "Send selection context to Codex", { range = true } },
-	{ "CodexSendDiagnosticsContext", "send_diagnostics_context", "Send diagnostics context to Codex", {} },
+	{
+		"CodexSendSelectionContext",
+		"send_selection_context",
+		"Send selection context to Codex",
+		{ range = true },
+	},
+	{
+		"CodexSendDiagnosticsContext",
+		"send_diagnostics_context",
+		"Send diagnostics context to Codex",
+		{},
+	},
 
 	{ "CodexResume", "resume", "Start codex resume session", {} },
 	{ "CodexResumeAll", "resume_all", "Start codex resume --all session", {} },

@@ -1,0 +1,26 @@
+{
+  "$schema": "https://raw.githubusercontent.com/LuaLS/vscode-lua/master/setting/schema.json",
+  "runtime.version": "LuaJIT",
+  "diagnostics.globals": [
+    "vim",
+    "describe",
+    "it",
+    "before_each",
+    "after_each",
+    "before_all",
+    "after_all",
+    "pending",
+    "assert",
+    "spy",
+    "stub",
+    "mock",
+    "match"
+  ],
+  "workspace.library": [
+    "${workspaceFolder}/lua",
+    "${workspaceFolder}/tests/types",
+    "${3rd}/luv/library",
+    "${3rd}/busted/library",
+    "${3rd}/luassert/library"
+  ]
+}
