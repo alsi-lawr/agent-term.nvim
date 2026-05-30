@@ -1,0 +1,146 @@
+*agent-term.nvim.txt*   agent-term.nvim help
+
+agent-term.nvim is a Neovim bridge for terminal-based coding agents.
+It keeps one persistent terminal-agent session and shows it in float/panel views.
+
+==============================================================================
+CONTENTS                                                    *agent-term-contents*
+
+1. Requirements .............................................. |agent-term-requirements|
+2. Setup ..................................................... |agent-term-setup|
+3. Commands .................................................. |agent-term-commands|
+4. Configuration ............................................. |agent-term-config|
+5. Hooks ..................................................... |agent-term-hooks|
+6. Lua API ................................................... |agent-term-api|
+
+==============================================================================
+REQUIREMENTS                                              *agent-term-requirements*
+
+- Neovim 0.12+
+- An installed terminal coding agent (for example: codex, claude, gemini)
+
+==============================================================================
+SETUP                                                            *agent-term-setup*
+
+With lazy.nvim >
+  {
+    "alsi-lawr/agent-term.nvim",
+    main = "agent_term",
+    opts = {},
+  }
+<
+Minimal setup >
+  require("agent_term").setup({
+    agent = "codex",
+  })
+<
+==============================================================================
+COMMANDS                                                      *agent-term-commands*
+
+General:
+  :AgentTermOpen                    Open/focus default (float) view
+  :AgentTermClose                   Close all AgentTerm windows, keep process
+  :AgentTermToggle                  Toggle default (float) view
+  :AgentTermFocus                   Focus default (float) view
+  :AgentTermKill                    Stop process and clear terminal state
+
+Float:
+  :AgentTermFloatOpen
+  :AgentTermFloatClose
+  :AgentTermFloatToggle
+  :AgentTermFloatFocus
+
+Panel:
+  :AgentTermPanelOpen
+  :AgentTermPanelClose
+  :AgentTermPanelToggle
+  :AgentTermPanelFocus
+
+Context:
+  :AgentTermSendBufferContext
+  :AgentTermSendSelectionContext
+  :AgentTermSendDiagnosticsContext
+
+Hooks and utility:
+  :AgentTermInstallHooks
+  :AgentTermIgnore
+
+Resume commands are registered only when supported by your current config:
+  :AgentTermResume
+  :AgentTermResumeAll
+  :AgentTermResumeLast
+
+==============================================================================
+CONFIGURATION                                                    *agent-term-config*
+
+Call `require("agent_term").setup(opts)`.
+
+Top-level keys:
+  `agent`      Agent preset string or explicit table
+  `backend`    Alias of `agent`
+  `float`      Float window options
+  `panel`      Panel window options
+  `context`    Context and hook options
+  `keymaps`    Table of keymaps, or `false` to disable
+
+Agent presets:
+  "codex", "gemini", "claude", "aider", "copilot", "opencode"
+
+Example (preset with command override) >
+  require("agent_term").setup({
+    agent = {
+      preset = "codex",
+      cmd = { "codex", "--model", "gpt-5.4-mini" },
+    },
+  })
+<
+Example (custom command + auto hook updates) >
+  require("agent_term").setup({
+    agent = {
+      cmd = { "my-agent" },
+      resume = false,
+    },
+    context = {
+      hook = { enabled = true },
+    },
+  })
+<
+`context` keys:
+  `file_path`                Path for hook context JSON file
+  `target_view`              "default" | "float" | "panel"
+  `hook.enabled`             Enable automatic hook file updates
+  `include_file_path`        Include file path in context payload
+  `include_filetype`         Include filetype in context payload
+  `include_cursor`           Include cursor location for buffer context
+  `include_selection_range`  Include line range for selection context
+  `include_diagnostics`      Include diagnostics context data
+
+==============================================================================
+HOOKS                                                            *agent-term-hooks*
+
+Manual context commands always paste to the terminal job.
+
+If `context.hook.enabled = true`, agent-term.nvim also writes context payloads to
+`context.file_path` for native hook consumers.
+
+Run `:AgentTermInstallHooks` to install supported native hooks:
+  - codex
+  - claude
+  - gemini
+
+For unsupported agents, install command warns and no hook files are written.
+
+==============================================================================
+LUA API                                                          *agent-term-api*
+
+Main module: >
+  local agent_term = require("agent_term")
+<
+Functions:
+  `setup(opts)`
+
+Runtime operations are exposed through user commands and keymaps, not the root
+Lua module.
+
+==============================================================================
+vim:tw=78:ts=8:noet:ft=help:norl:

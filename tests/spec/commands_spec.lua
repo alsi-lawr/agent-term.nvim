@@ -1,32 +1,6 @@
 local reload = require("tests.helpers.reload")
 
 describe("Given Agent Term command registration", function()
-	local function api()
-		return {
-			open = function() end,
-			close = function() end,
-			toggle = function() end,
-			focus = function() end,
-			kill = function() end,
-			float_open = function() end,
-			float_close = function() end,
-			float_toggle = function() end,
-			float_focus = function() end,
-			panel_open = function() end,
-			panel_close = function() end,
-			panel_toggle = function() end,
-			panel_focus = function() end,
-			send_buffer_context = function() end,
-			send_selection_context = function() end,
-			send_diagnostics_context = function() end,
-			install_hooks = function() end,
-			ignore = function() end,
-			resume = function() end,
-			resume_all = function() end,
-			resume_last = function() end,
-		}
-	end
-
 	local function exists(command)
 		return vim.fn.exists(":" .. command) == 2
 	end
@@ -49,7 +23,7 @@ describe("Given Agent Term command registration", function()
 		local config = require("agent_term.setup.runtime_config")
 		local commands = require("agent_term.commands.registry")
 		config.setup()
-		commands.setup(api())
+		commands.setup()
 
 		assert.is_true(exists("AgentTermResume"))
 		assert.is_true(exists("AgentTermResumeAll"))
@@ -65,7 +39,7 @@ describe("Given Agent Term command registration", function()
 				resume = false,
 			},
 		})
-		commands.setup(api())
+		commands.setup()
 
 		assert.is_false(exists("AgentTermResume"))
 		assert.is_false(exists("AgentTermResumeAll"))
@@ -85,7 +59,7 @@ describe("Given Agent Term command registration", function()
 				},
 			},
 		})
-		commands.setup(api())
+		commands.setup()
 
 		assert.is_true(exists("AgentTermResume"))
 		assert.is_false(exists("AgentTermResumeAll"))

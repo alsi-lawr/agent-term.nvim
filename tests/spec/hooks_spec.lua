@@ -41,12 +41,13 @@ describe("Given native agent hook installation", function()
 
 	it("When installing Codex hooks Then global hook config and script are written", function()
 		local plugin = require("agent_term")
+		local hooks = require("agent_term.hooks")
 		plugin.setup({ agent = "codex" })
 
-		assert.is_true(plugin.install_hooks())
+		assert.is_true(hooks.install())
 
-		local hooks = read_json(path(".codex/hooks.json"))
-		local handler = hooks.hooks.UserPromptSubmit[1].hooks[1]
+		local hooks_json = read_json(path(".codex/hooks.json"))
+		local handler = hooks_json.hooks.UserPromptSubmit[1].hooks[1]
 		assert.are.equal("command", handler.type)
 		assert.is_not_nil(handler.command:match("%.codex/hooks/agent_term_context%.py"))
 		assert.is_not_nil(handler.command:match("%$PWD/.agent%-term/context%.json"))
@@ -58,8 +59,9 @@ describe("Given native agent hook installation", function()
 		"When the installed context script runs Then it emits UserPromptSubmit additionalContext",
 		function()
 			local plugin = require("agent_term")
+			local hooks = require("agent_term.hooks")
 			plugin.setup({ agent = "codex" })
-			plugin.install_hooks()
+			hooks.install()
 			vim.fn.mkdir(path(".agent-term"), "p")
 			vim.fn.writefile({
 				vim.json.encode({
@@ -102,14 +104,15 @@ describe("Given native agent hook installation", function()
 
 	it("When global hook entries already exist Then install leaves config unchanged", function()
 		local plugin = require("agent_term")
+		local hooks = require("agent_term.hooks")
 		plugin.setup({ agent = "codex" })
-		assert.is_true(plugin.install_hooks())
+		assert.is_true(hooks.install())
 
 		local hooks_path = path(".codex/hooks.json")
 		local first_mtime = vim.fn.getftime(hooks_path)
 		vim.wait(1100)
 
-		assert.is_true(plugin.install_hooks())
+		assert.is_true(hooks.install())
 		local second_mtime = vim.fn.getftime(hooks_path)
 		assert.are.equal(first_mtime, second_mtime)
 	end)
@@ -134,9 +137,10 @@ describe("Given native agent hook installation", function()
 		"When installing hooks for an unsupported agent Then it warns and writes no hook files",
 		function()
 			local plugin = require("agent_term")
+			local hooks = require("agent_term.hooks")
 			plugin.setup({ agent = "aider" })
 
-			assert.is_false(plugin.install_hooks())
+			assert.is_false(hooks.install())
 
 			assert.are.equal(0, vim.fn.isdirectory(path(".codex")))
 			assert.are.equal(0, vim.fn.isdirectory(path(".claude")))

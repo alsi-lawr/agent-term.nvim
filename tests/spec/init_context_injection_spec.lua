@@ -2,8 +2,11 @@
 local reload = require("tests.helpers.reload")
 
 describe("Given panel silent context injection", function()
+	local context_commands
+	local enums
 	local state
 	local plugin
+	local view_controller
 	local source_buf
 	local terminal_buf
 	local sent_messages
@@ -74,7 +77,10 @@ describe("Given panel silent context injection", function()
 		}
 
 		plugin = require("agent_term")
+		context_commands = require("agent_term.context.commands")
+		enums = require("agent_term.enums")
 		state = require("agent_term.runtime.state")
+		view_controller = require("agent_term.ui.controller")
 	end)
 
 	after_each(function()
@@ -97,7 +103,7 @@ describe("Given panel silent context injection", function()
 
 	it("When panel opens Then it captures buffer context before current buffer changes", function()
 		plugin.setup({ context = { target_view = "panel" } })
-		plugin.panel_open()
+		view_controller.open(enums.view.PANEL)
 
 		assert.are.equal(terminal_buf, vim.api.nvim_get_current_buf())
 		assert.is_not_nil(state.last_captured_context)
@@ -106,7 +112,7 @@ describe("Given panel silent context injection", function()
 
 	it("When panel opens Then it captures selection context before focus changes", function()
 		plugin.setup({ context = { target_view = "panel" } })
-		plugin.panel_open()
+		view_controller.open(enums.view.PANEL)
 
 		assert.is_not_nil(state.last_captured_context)
 		assert.is_not_nil(state.last_captured_context.selection:match("selection: lines 2%-4"))
@@ -116,10 +122,10 @@ describe("Given panel silent context injection", function()
 		plugin.setup({
 			context = { target_view = "panel" },
 		})
-		plugin.panel_open()
+		view_controller.open(enums.view.PANEL)
 		vim.api.nvim_buf_set_name(terminal_buf, "/tmp/panel-terminal.txt")
 
-		plugin.send_buffer_context()
+		context_commands.send_buffer_context()
 
 		assert.are.equal(1, #sent_messages)
 		assert.is_not_nil(sent_messages[1]:match("file: /tmp/panel%-source%.lua"))
@@ -131,7 +137,7 @@ describe("Given panel silent context injection", function()
 		state.buf = nil
 		state.job_id = nil
 
-		plugin.send_buffer_context()
+		context_commands.send_buffer_context()
 
 		assert.are.equal(1, #sent_messages)
 		assert.is_not_nil(sent_messages[1]:match("file: /tmp/panel%-source%.lua"))
@@ -145,7 +151,7 @@ describe("Given panel silent context injection", function()
 			state.buf = nil
 			state.job_id = nil
 
-			plugin.send_selection_context({})
+			context_commands.send_selection_context({})
 
 			assert.are.equal(1, #sent_messages)
 			assert.is_not_nil(sent_messages[1]:match("type: selection"))
@@ -161,7 +167,7 @@ describe("Given panel silent context injection", function()
 				context = { target_view = "panel" },
 			})
 			local source_win = vim.api.nvim_get_current_win()
-			plugin.panel_open()
+			view_controller.open(enums.view.PANEL)
 
 			local other_buf = vim.api.nvim_create_buf(true, false)
 			vim.api.nvim_buf_set_name(other_buf, "/tmp/current-source.lua")
@@ -169,7 +175,7 @@ describe("Given panel silent context injection", function()
 			vim.api.nvim_set_current_win(source_win)
 			vim.api.nvim_set_current_buf(other_buf)
 
-			plugin.send_buffer_context()
+			context_commands.send_buffer_context()
 
 			assert.are.equal(1, #sent_messages)
 			assert.is_not_nil(sent_messages[1]:match("file: /tmp/current%-source%.lua"))
@@ -184,7 +190,7 @@ describe("Given panel silent context injection", function()
 			context = { target_view = "panel" },
 		})
 		local source_win = vim.api.nvim_get_current_win()
-		plugin.panel_open()
+		view_controller.open(enums.view.PANEL)
 
 		local latest_buf = vim.api.nvim_create_buf(true, false)
 		vim.api.nvim_buf_set_name(latest_buf, "/tmp/latest-source.lua")
@@ -193,7 +199,7 @@ describe("Given panel silent context injection", function()
 		vim.api.nvim_set_current_buf(latest_buf)
 		vim.api.nvim_set_current_win(state.panel_win)
 
-		plugin.send_buffer_context()
+		context_commands.send_buffer_context()
 
 		assert.are.equal(1, #sent_messages)
 		assert.is_not_nil(sent_messages[1]:match("file: /tmp/latest%-source%.lua"))
@@ -204,10 +210,10 @@ describe("Given panel silent context injection", function()
 
 	it("When no context has been captured Then panel submission is handled cleanly", function()
 		plugin.setup({ context = { target_view = "panel" } })
-		plugin.panel_open()
+		view_controller.open(enums.view.PANEL)
 		state.last_captured_context = nil
 
-		plugin.send_buffer_context()
+		context_commands.send_buffer_context()
 
 		assert.are.equal(0, #sent_messages)
 		assert.are.equal("info", notifications[#notifications].level)
@@ -232,9 +238,9 @@ describe("Given panel silent context injection", function()
 			plugin.setup({
 				context = { target_view = "panel" },
 			})
-			plugin.panel_open()
+			view_controller.open(enums.view.PANEL)
 
-			plugin.send_diagnostics_context()
+			context_commands.send_diagnostics_context()
 
 			assert.are.equal(1, #sent_messages)
 			assert.is_not_nil(sent_messages[1]:match("type: diagnostics"))
@@ -257,7 +263,7 @@ describe("Given panel silent context injection", function()
 		state.buf = nil
 		state.job_id = nil
 
-		plugin.send_diagnostics_context()
+		context_commands.send_diagnostics_context()
 
 		assert.are.equal(1, #sent_messages)
 		assert.is_not_nil(sent_messages[1]:match("type: diagnostics"))
@@ -281,7 +287,7 @@ describe("Given panel silent context injection", function()
 		state.buf = nil
 		state.job_id = nil
 
-		plugin.send_diagnostics_context()
+		context_commands.send_diagnostics_context()
 
 		assert.are.equal(1, #sent_messages)
 		assert.is_not_nil(sent_messages[1]:match("type: diagnostics"))
@@ -299,9 +305,9 @@ describe("Given panel silent context injection", function()
 					},
 				},
 			})
-			plugin.panel_open()
+			view_controller.open(enums.view.PANEL)
 
-			plugin.send_buffer_context()
+			context_commands.send_buffer_context()
 
 			assert.are.equal(1, #sent_messages)
 			assert.is_not_nil(sent_messages[1]:match("file: /tmp/panel%-source%.lua"))
@@ -319,7 +325,7 @@ describe("Given panel silent context injection", function()
 		state.buf = nil
 		state.job_id = nil
 
-		plugin.send_buffer_context()
+		context_commands.send_buffer_context()
 
 		assert.are.equal(1, #sent_messages)
 		assert.is_not_nil(sent_messages[1]:match("file: /tmp/panel%-source%.lua"))
@@ -335,7 +341,7 @@ describe("Given panel silent context injection", function()
 			},
 		})
 		local source_win = vim.api.nvim_get_current_win()
-		plugin.panel_open()
+		view_controller.open(enums.view.PANEL)
 
 		local other_buf = vim.api.nvim_create_buf(true, false)
 		vim.api.nvim_buf_set_name(other_buf, "/tmp/hook-source.lua")
@@ -343,7 +349,7 @@ describe("Given panel silent context injection", function()
 		vim.api.nvim_set_current_win(source_win)
 		vim.api.nvim_set_current_buf(other_buf)
 
-		plugin.send_buffer_context()
+		context_commands.send_buffer_context()
 
 		assert.are.equal(1, #sent_messages)
 		assert.is_not_nil(sent_messages[1]:match("file: /tmp/hook%-source%.lua"))
@@ -361,9 +367,9 @@ describe("Given panel silent context injection", function()
 				},
 			},
 		})
-		plugin.panel_open()
+		view_controller.open(enums.view.PANEL)
 
-		plugin.send_selection_context({})
+		context_commands.send_selection_context({})
 
 		assert.are.equal(1, #sent_messages)
 		assert.is_not_nil(sent_messages[1]:match("selection: lines 2%-4"))
