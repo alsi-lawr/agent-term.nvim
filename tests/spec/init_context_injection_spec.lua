@@ -17,12 +17,6 @@ describe("Given panel silent context injection", function()
 		end
 	end
 
-	local function read_context_file()
-		local path = temp_dir .. "/.agent-term/context.json"
-		local lines = vim.fn.readfile(path)
-		return vim.json.decode(table.concat(lines, "\n"))
-	end
-
 	before_each(function()
 		reload.clear_agent_term_modules()
 		notifications = {}

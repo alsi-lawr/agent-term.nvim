@@ -33,24 +33,25 @@ describe("Given AgentTermIgnore", function()
 		reload.clear_agent_term_modules()
 	end)
 
-	it("When .gitignore is missing Then it creates it with /.agent-term/", function()
+	it("When .gitignore is missing Then it creates it with the ignore comment and entry", function()
 		local plugin = require("agent_term")
 		plugin.setup()
 
 		vim.cmd.AgentTermIgnore()
 
 		assert.are.equal(1, vim.fn.filereadable(".gitignore"))
-		assert.are.equal("/.agent-term/", read(".gitignore"))
+		assert.are.equal("# Ignore agent-term.nvim context\n.agent-term/", read(".gitignore"))
 	end)
 
-	it("When entry is absent Then it appends /.agent-term/", function()
+	it("When entry is absent Then it appends the ignore comment and entry", function()
 		vim.fn.writefile({ "*.log" }, ".gitignore")
 		local plugin = require("agent_term")
 		plugin.setup()
 
 		vim.cmd.AgentTermIgnore()
 
-		assert.is_true(read(".gitignore"):match("/%.agent%-term/") ~= nil)
+		assert.is_true(read(".gitignore"):match("%.agent%-term/") ~= nil)
+		assert.is_true(read(".gitignore"):match("# Ignore agent%-term%.nvim context") ~= nil)
 	end)
 
 	it("When entry already exists Then file is unchanged", function()

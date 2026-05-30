@@ -13,7 +13,8 @@ end
 
 local function has_entry(lines)
 	for _, line in ipairs(lines) do
-		if vim.trim(line) == ENTRY then
+		local trimmed = vim.trim(line)
+		if trimmed == ENTRY or trimmed == "/" .. ENTRY then
 			return true
 		end
 	end

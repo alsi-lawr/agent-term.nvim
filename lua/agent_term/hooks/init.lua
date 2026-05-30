@@ -51,12 +51,12 @@ function M.install()
 	config.options.agent.context.mode = "hook"
 
 	local msg
-	if result.changed then
+	if result and result.changed then
 		msg = ("Installed native %s hooks. Files: %s"):format(
 			agent_name,
 			table.concat(result.files, ", ")
 		)
-	else
+	elseif result then
 		msg = ("Native %s hooks already installed. Files unchanged: %s"):format(
 			agent_name,
 			table.concat(result.files, ", ")
@@ -81,17 +81,16 @@ function M.detect()
 		return false
 	end
 
-	if
-		not installer.is_installed({
-			context_file_path = context_file_path(),
-		})
-	then
+	if not installer.is_installed({
+		context_file_path = context_file_path(),
+	}) then
 		-- Fallback to paste mode if hooks are not actually installed on disk
 		config.options.agent.context.mode = "paste"
 		notify.warn(
-			("Hook mode enabled for `%s` but native hooks were not found. Falling back to paste mode. Run :AgentTermInstallHooks to install."):format(
-				agent_name
-			)
+			(
+				"Hook mode enabled for `%s` but native hooks were not found. "
+				.. "Falling back to paste mode. Run :AgentTermInstallHooks to install."
+			):format(agent_name)
 		)
 		return true
 	end
