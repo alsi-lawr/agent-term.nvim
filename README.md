@@ -115,7 +115,7 @@ caveats are documented in [docs/backends.md](docs/backends.md).
 | Preset | Command | Context mode | Resume summary |
 | --- | --- | --- | --- |
 | `codex` | `codex` | paste; native hook install supported | default, all, last |
-| `gemini` | `gemini` | paste | default, last |
+| `gemini` | `gemini` | paste; native hook install supported | default, last |
 | `claude` | `claude` | paste; native hook install supported | default, last |
 | `aider` | `aider` | paste | default |
 | `copilot` | `copilot` | paste | default, last |
@@ -176,13 +176,28 @@ Context commands send lightweight editor metadata, not full buffer contents.
 - Selection context sends file path, filetype, and selected line range.
 - Diagnostics context sends compact diagnostics for the current buffer.
 
-Paste mode sends context to the running terminal job. Hook mode writes the latest captured context
-to `context.file_path` (default: `.agent-term/context.json`) and relies on an installed native agent
-hook to read that file during the agent's `UserPromptSubmit` lifecycle event. Run
-`:AgentTermInstallHooks` to install supported native hooks for the configured agent.
+### Automatic Updates (Hook Mode)
+
+When using [Hook mode](#hook-mode), context is automatically updated in the background on buffer switch, diagnostics change, or after leaving visual/select mode. It uses a priority system to ensure the most relevant context is always available:
+
+1. **Diagnostics**: If the buffer has diagnostics, they are sent as the primary context.
+2. **Selection**: If no diagnostics are active but a selection exists, it is prioritized.
+3. **Buffer**: Fallback to standard buffer metadata.
+
+The plugin manages repo-level state in the `.agent-term/` directory by default.
+
+<p align="center">
+  <img src="docs/assets/context-retrieval-demo.gif" alt="agent-term.nvim hook mode context retrieval demo" width="900" />
+</p>
+
+### Backend Modes
+
+**Paste mode** sends context to the running terminal job via simulated keystrokes.
+
+**Hook mode** writes the latest context payload to `context.file_path` (default: `.agent-term/context.json`) and relies on an installed native agent hook to read that file during the agent's prompt lifecycle. Run `:AgentTermInstallHooks` to install supported native hooks for the configured agent.
 
 Hook installation is explicit. Normal setup does not modify project or user agent config files.
-Codex and Claude are supported initially; Gemini, Aider, Copilot, and Opencode stay in paste mode
+Codex, Claude, and Gemini support native hook installation. Aider, Copilot, and Opencode stay in paste mode
 unless you explicitly configure a verified native hook integration.
 
 If the agent is not running, context commands open the configured `context.target_view`. The default
@@ -197,7 +212,7 @@ target reuses an open panel when one exists, otherwise it opens a float.
 - `:AgentTermSendBufferContext`: send lightweight metadata for the current buffer.
 - `:AgentTermSendSelectionContext`: send lightweight metadata for the selected range.
 - `:AgentTermSendDiagnosticsContext`: send compact diagnostics for the current buffer.
-- `:AgentTermInstallHooks`: install project-local native hooks for supported agents.
+- `:AgentTermInstallHooks`: install global native hooks for supported agents.
 - `:AgentTermResume`, `:AgentTermResumeAll`, `:AgentTermResumeLast`: registered only when the
   configured backend supports that resume capability.
 

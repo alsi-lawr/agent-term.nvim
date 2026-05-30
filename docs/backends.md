@@ -37,7 +37,7 @@ Plain custom commands do not inherit preset resume or hook-context behavior. For
 | Preset | Command | Context mode | Resume default | Resume all | Resume last |
 | --- | --- | --- | --- | --- | --- |
 | `codex` | `{ "codex" }` | paste; native hook install supported | `{ "codex", "resume" }` | `{ "codex", "resume", "--all" }` | `{ "codex", "resume", "--last" }` |
-| `gemini` | `{ "gemini" }` | paste | `{ "gemini", "-r" }` | `false` | `{ "gemini", "-r", "latest" }` |
+| `gemini` | `{ "gemini" }` | paste; native hook install supported | `{ "gemini", "-r" }` | `false` | `{ "gemini", "-r", "latest" }` |
 | `claude` | `{ "claude" }` | paste; native hook install supported | `{ "claude", "--resume" }` | `false` | `{ "claude", "--continue" }` |
 | `aider` | `{ "aider" }` | paste | `{ "aider", "--restore-chat-history" }` | `false` | `false` |
 | `copilot` | `{ "copilot" }` | paste | `{ "copilot", "--resume" }` | `false` | `{ "copilot", "--continue" }` |
@@ -48,13 +48,20 @@ registered.
 
 ## Context Modes
 
-Paste mode sends context text to the running terminal channel with `nvim_chan_send`.
+**Paste mode** sends context text to the running terminal channel with `nvim_chan_send`.
 
-Hook mode writes the latest context command payload to `context.file_path` (default:
+**Hook mode** writes the latest context command payload to `context.file_path` (default:
 `.agent-term/context.json`) and does not paste anything into the terminal. A native agent hook reads
 that file during the agent's `UserPromptSubmit` event and returns it as `additionalContext`.
 
-Codex and Claude can use hook mode after you install native hooks. Gemini, Aider, Copilot, and
+In Hook Mode, `agent-term.nvim` automatically updates the context file in the background as you work:
+- **On Buffer Switch**: Updates context for the new file.
+- **On Diagnostics Change**: Updates when LSP or linter diagnostics arrive.
+- **On Mode Change**: Updates after you finish a visual/select mode selection.
+
+The automatic updates follow a priority order: **Diagnostics > Selection > File Metadata**. This ensures the agent always sees what is most relevant to your current cursor position and editor state.
+
+Codex, Claude, and Gemini can use hook mode after you install native hooks. Aider, Copilot, and
 Opencode use paste mode unless a verified native context-injection hook installer is added.
 
 Hook mode is backend-driven, not view-driven. It applies from float, panel, and source-window
@@ -77,10 +84,10 @@ require("agent_term").setup({
 })
 ```
 
-Codex writes:
+Codex merges into:
 
-- `.codex/hooks.json`
-- `.codex/hooks/agent_term_context.py`
+- `~/.codex/hooks.json`
+- `~/.codex/hooks/agent_term_context.py`
 
 The Codex hook is registered for `UserPromptSubmit`. It reads `.agent-term/context.json` and emits:
 
@@ -93,17 +100,29 @@ The Codex hook is registered for `UserPromptSubmit`. It reads `.agent-term/conte
 }
 ```
 
-Claude writes:
+Claude merges into:
 
-- `.claude/settings.json`
-- `.claude/hooks/agent_term_context.py`
+- `~/.claude/settings.json`
+- `~/.claude/hooks/agent_term_context.py`
 
 The Claude Code hook uses the same `UserPromptSubmit` `hookSpecificOutput.additionalContext` shape
 required by Claude Code hooks.
 
-To remove installed hooks, delete the matching `UserPromptSubmit` entry from `.codex/hooks.json` or
-`.claude/settings.json`, then delete the generated `agent_term_context.py` script. You can also
-delete `.agent-term/context.json`; it will be recreated when hook-mode context is sent again.
+Gemini merges into:
+
+- `~/.gemini/settings.json`
+- `~/.gemini/hooks/agent_term_context.py`
+
+The Gemini hook is registered for `BeforeModel`. It reads `.agent-term/context.json` and injects its
+content into the `content` field of the `llm_request` before returning it to the CLI.
+
+Installer behavior is idempotent: if the exact hook entry already exists, install leaves config
+files unchanged.
+
+To remove installed hooks, delete the matching `UserPromptSubmit` or `BeforeModel` entry from
+`~/.codex/hooks.json`, `~/.claude/settings.json`, or `~/.gemini/settings.json`, then delete the generated
+`~/.codex/hooks/agent_term_context.py`, `~/.claude/hooks/agent_term_context.py`, or `~/.gemini/hooks/agent_term_context.py` script. You can
+also delete `.agent-term/context.json`; it will be recreated when hook-mode context is sent again.
 
 ## Custom Resume Support
 
