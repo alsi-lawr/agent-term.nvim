@@ -226,6 +226,7 @@ target reuses an open panel when one exists, otherwise it opens a float.
 - `:AgentTermSendSelectionContext`: send lightweight metadata for the selected range.
 - `:AgentTermSendDiagnosticsContext`: send compact diagnostics for the current buffer.
 - `:AgentTermInstallHooks`: install global native hooks for supported agents.
+- `:AgentTermIgnore`: add `/.agent-term/` to `.gitignore` (idempotent).
 - `:AgentTermResume`, `:AgentTermResumeAll`, `:AgentTermResumeLast`: registered only when the
   configured backend supports that resume capability.
 
