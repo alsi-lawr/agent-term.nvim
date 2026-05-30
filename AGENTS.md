@@ -1,6 +1,7 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
+
 - Core plugin code lives in `lua/agent_term/`.
 - Entry point: `lua/agent_term/init.lua`.
 - Functional areas are split by concern:
@@ -11,10 +12,10 @@
 - Tests live under `tests/`:
   - `tests/spec/`: Plenary/Busted specs.
   - `tests/helpers/`: test utilities.
-  - `tests/types/`: LuaLS/Busted type shims.
 - Docs/media: `README.md`, `docs/`, `assets/`.
 
 ## Build, Test, and Development Commands
+
 - `./run_tests.sh`: run the full headless Neovim test suite.
 - `PLENARY_PATH=/path/to/plenary.nvim ./run_tests.sh`: run tests when Plenary is outside standard runtime paths.
 - `stylua --check lua tests`: formatting check.
@@ -23,6 +24,7 @@
   - `nvim --headless -u tests/minimal_init.lua -i NONE -c "PlenaryBustedDirectory tests/spec { minimal_init = 'tests/minimal_init.lua' }" -c "qa"`
 
 ## Coding Style & Naming Conventions
+
 - Language: Lua (Neovim API).
 - Formatting is defined by `.stylua.toml`:
   - tabs, width 2, max column 100, Unix line endings.
@@ -32,12 +34,14 @@
 - Prefer clear, small modules with explicit `require(...)` boundaries.
 
 ## Testing Guidelines
+
 - Framework: Plenary test harness with Busted-style specs.
 - Add new tests in `tests/spec/*_spec.lua`.
 - Keep test descriptions behavior-oriented (`Given/When/Then` style is preferred).
 - Cover both happy paths and state/error transitions (for example, missing executable, stale windows, invalid config keys).
 
 ## Commit & Pull Request Guidelines
+
 - Follow Angular-style conventional commits seen in history:
   - `feat(config): ...`, `refactor(lua): ...`, `test(nvim): ...`, `docs(readme): ...`, `chore(lua): ...`.
 - Keep commits atomic and scoped to one logical change.
