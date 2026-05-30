@@ -11,12 +11,6 @@ M.panel_position = {
 	BOTTOM = "bottom",
 }
 
-M.resume_kind = {
-	DEFAULT = "default",
-	ALL = "all",
-	LAST = "last",
-}
-
 M.agent = {
 	CODEX = "codex",
 	GEMINI = "gemini",

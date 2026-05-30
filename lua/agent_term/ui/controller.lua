@@ -19,7 +19,7 @@ end
 function M.open(view, opts)
 	opts = opts or {}
 	captured_context.capture_before_view_switch()
-	local buf = terminal.ensure_session(config.options.agent.cmd)
+	local buf = terminal.ensure_session()
 	if not buf then
 		return false
 	end

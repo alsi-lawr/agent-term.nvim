@@ -2,7 +2,6 @@ local context_commands = require("agent_term.context.commands")
 local enums = require("agent_term.enums")
 local hooks = require("agent_term.hooks")
 local ignore = require("agent_term.commands.ignore")
-local resume = require("agent_term.runtime.resume")
 local terminal = require("agent_term.runtime.session")
 local view_controller = require("agent_term.ui.controller")
 
@@ -49,9 +48,6 @@ local handlers = {
 	send_diagnostics_context = context_commands.send_diagnostics_context,
 	install_hooks = hooks.install,
 	ignore = ignore.ensure_ignored,
-	resume = resume.resume_default,
-	resume_all = resume.resume_all,
-	resume_last = resume.resume_last,
 }
 
 ---@param name string

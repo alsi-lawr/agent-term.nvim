@@ -10,6 +10,7 @@ describe("Given panel silent context injection", function()
 	local source_buf
 	local terminal_buf
 	local sent_messages
+	local ensure_session_arg
 	local notifications
 	local original_cwd
 	local temp_dir
@@ -24,6 +25,7 @@ describe("Given panel silent context injection", function()
 		reload.clear_agent_term_modules()
 		notifications = {}
 		sent_messages = {}
+		ensure_session_arg = "__unset__"
 		package.loaded["agent_term.notify"] = {
 			info = function(msg)
 				notifications[#notifications + 1] = { level = "info", msg = msg }
@@ -50,7 +52,8 @@ describe("Given panel silent context injection", function()
 		vim.api.nvim_buf_set_mark(source_buf, ">", 2, 0, {})
 
 		package.loaded["agent_term.runtime.session"] = {
-			ensure_session = function(_)
+			ensure_session = function(cmd)
+				ensure_session_arg = cmd
 				local s = require("agent_term.runtime.state")
 				s.buf = terminal_buf
 				s.job_id = 111
@@ -62,9 +65,6 @@ describe("Given panel silent context injection", function()
 			end,
 			close_views = function() end,
 			kill = function() end,
-			start_resume = function(_)
-				return nil
-			end,
 		}
 
 		package.loaded["agent_term.hooks.installers.codex"] = {
@@ -105,6 +105,7 @@ describe("Given panel silent context injection", function()
 		plugin.setup({ context = { target_view = "panel" } })
 		view_controller.open(enums.view.PANEL)
 
+		assert.is_nil(ensure_session_arg)
 		assert.are.equal(terminal_buf, vim.api.nvim_get_current_buf())
 		assert.is_not_nil(state.last_captured_context)
 		assert.is_not_nil(state.last_captured_context.buffer:match("file: /tmp/panel%-source%.lua"))

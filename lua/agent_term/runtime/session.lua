@@ -69,7 +69,7 @@ function M.ensure_session(cmd)
 		state.reset_terminal()
 	end
 
-	local run_cmd = cmd or config.options.agent.cmd
+	local run_cmd = cmd or config.auto_resume_command() or config.options.agent.cmd
 	if not can_run_cmd(run_cmd) then
 		notify.error(("Agent command not found: %s"):format(command_name(run_cmd)))
 		return nil
@@ -131,21 +131,6 @@ function M.kill()
 	end
 
 	state.reset_terminal()
-end
-
-function M.start_resume(kind)
-	if state.has_running_job() then
-		notify.warn("Agent session is already running. Run :AgentTermKill first.")
-		return nil
-	end
-
-	local cmd = config.resume_command(kind)
-	if not cmd then
-		notify.error(("Resume capability is not configured: %s"):format(tostring(kind)))
-		return nil
-	end
-
-	return M.ensure_session(cmd)
 end
 
 return M

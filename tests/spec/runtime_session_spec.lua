@@ -47,14 +47,7 @@ describe("Given Agent Term runtime session management", function()
 
 		config = require("agent_term.setup.runtime_config")
 		config.setup({
-			agent = {
-				cmd = { "codex" },
-				resume = {
-					default = { "codex", "resume" },
-					all = { "codex", "resume", "--all" },
-					last = { "codex", "resume", "--last" },
-				},
-			},
+			agent = "codex",
 		})
 		state = require("agent_term.runtime.state")
 		session = require("agent_term.runtime.session")
@@ -151,14 +144,81 @@ describe("Given Agent Term runtime session management", function()
 		end
 	)
 
+	it("When auto resume is false Then the configured interactive command starts", function()
+		local started_cmd
+		config.setup({
+			agent = {
+				preset = "gemini",
+				auto_resume = false,
+			},
+		})
+		vim.fn.executable = function(_)
+			return 1
+		end
+		vim.fn.jobstart = function(cmd, _)
+			started_cmd = cmd
+			return 88
+		end
+
+		local buf = session.ensure_session()
+
+		assert.is_true(vim.api.nvim_buf_is_valid(buf))
+		assert.are.same({ "gemini" }, started_cmd)
+	end)
+
+	it("When auto resume uses picker mode Then startup uses the preset picker command", function()
+		local started_cmd
+		config.setup({
+			agent = {
+				preset = "codex",
+				auto_resume = "picker",
+			},
+		})
+		vim.fn.executable = function(_)
+			return 1
+		end
+		vim.fn.jobstart = function(cmd, _)
+			started_cmd = cmd
+			return 89
+		end
+
+		local buf = session.ensure_session()
+
+		assert.is_true(vim.api.nvim_buf_is_valid(buf))
+		assert.are.same({ "codex", "resume" }, started_cmd)
+	end)
+
+	it("When auto resume uses last mode Then startup appends preset args to the command", function()
+		local started_cmd
+		config.setup({
+			agent = {
+				preset = "codex",
+				cmd = { "codex", "--model", "gpt-5.4-mini" },
+				auto_resume = "last",
+			},
+		})
+		vim.fn.executable = function(_)
+			return 1
+		end
+		vim.fn.jobstart = function(cmd, _)
+			started_cmd = cmd
+			return 90
+		end
+
+		local buf = session.ensure_session()
+
+		assert.is_true(vim.api.nvim_buf_is_valid(buf))
+		assert.are.same({ "codex", "--model", "gpt-5.4-mini", "resume", "--last" }, started_cmd)
+	end)
+
 	it(
-		"When configured for Gemini Then the interactive command starts without resume support",
+		"When auto resume is configured for a custom command Then startup uses the custom command",
 		function()
 			local started_cmd
 			config.setup({
 				agent = {
-					cmd = { "gemini" },
-					resume = false,
+					cmd = { "my-agent" },
+					auto_resume = "last",
 				},
 			})
 			vim.fn.executable = function(_)
@@ -166,55 +226,38 @@ describe("Given Agent Term runtime session management", function()
 			end
 			vim.fn.jobstart = function(cmd, _)
 				started_cmd = cmd
-				return 88
-			end
-			vim.fn.jobwait = function(ids, _)
-				return { ids[1] == 88 and -1 or 0 }
+				return 91
 			end
 
 			local buf = session.ensure_session()
 
 			assert.is_true(vim.api.nvim_buf_is_valid(buf))
-			assert.are.same({ "gemini" }, started_cmd)
-			assert.is_false(config.has_resume("default"))
+			assert.are.same({ "my-agent" }, started_cmd)
 		end
 	)
 
-	it("When resuming while already running Then it refuses and asks user to kill first", function()
-		state.job_id = 55
-		vim.fn.jobwait = function(ids, _)
-			return { ids[1] == 55 and -1 or 0 }
-		end
-
-		local buf = session.start_resume("all")
-
-		assert.is_nil(buf)
-		assert.are.equal("warn", notifications[#notifications].level)
-		assert.match("Run :AgentTermKill first", notifications[#notifications].msg)
-	end)
-
 	it(
-		"When a resume capability is disabled Then it returns nil and reports a clear error",
+		"When auto resume mode is unavailable for a preset Then startup uses the normal command",
 		function()
-			vim.fn.jobwait = function(_, _)
-				return { 0 }
-			end
+			local started_cmd
 			config.setup({
 				agent = {
-					cmd = { "some-agent" },
-					resume = {
-						default = { "some-agent", "resume" },
-						all = false,
-						last = false,
-					},
+					preset = "opencode",
+					auto_resume = "picker",
 				},
 			})
+			vim.fn.executable = function(_)
+				return 1
+			end
+			vim.fn.jobstart = function(cmd, _)
+				started_cmd = cmd
+				return 92
+			end
 
-			local buf = session.start_resume("all")
+			local buf = session.ensure_session()
 
-			assert.is_nil(buf)
-			assert.are.equal("error", notifications[#notifications].level)
-			assert.match("Resume capability is not configured: all", notifications[#notifications].msg)
+			assert.is_true(vim.api.nvim_buf_is_valid(buf))
+			assert.are.same({ "opencode" }, started_cmd)
 		end
 	)
 end)

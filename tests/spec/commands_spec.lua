@@ -7,9 +7,22 @@ describe("Given Agent Term command registration", function()
 
 	after_each(function()
 		local commands = {
-			"AgentTermResume",
-			"AgentTermResumeAll",
-			"AgentTermResumeLast",
+			"AgentTermOpen",
+			"AgentTermClose",
+			"AgentTermToggle",
+			"AgentTermFocus",
+			"AgentTermKill",
+			"AgentTermFloatOpen",
+			"AgentTermFloatClose",
+			"AgentTermFloatToggle",
+			"AgentTermFloatFocus",
+			"AgentTermPanelOpen",
+			"AgentTermPanelClose",
+			"AgentTermPanelToggle",
+			"AgentTermPanelFocus",
+			"AgentTermSendBufferContext",
+			"AgentTermSendSelectionContext",
+			"AgentTermSendDiagnosticsContext",
 			"AgentTermInstallHooks",
 			"AgentTermIgnore",
 		}
@@ -19,50 +32,16 @@ describe("Given Agent Term command registration", function()
 		reload.clear_agent_term_modules()
 	end)
 
-	it("When the default backend is used Then resume commands are registered", function()
+	it("When commands are set up Then the supported command surface is registered", function()
 		local config = require("agent_term.setup.runtime_config")
 		local commands = require("agent_term.commands.registry")
 		config.setup()
 		commands.setup()
 
-		assert.is_true(exists("AgentTermResume"))
-		assert.is_true(exists("AgentTermResumeAll"))
-		assert.is_true(exists("AgentTermResumeLast"))
-	end)
-
-	it("When resume is disabled Then resume commands are not registered", function()
-		local config = require("agent_term.setup.runtime_config")
-		local commands = require("agent_term.commands.registry")
-		config.setup({
-			agent = {
-				cmd = { "gemini" },
-				resume = false,
-			},
-		})
-		commands.setup()
-
-		assert.is_false(exists("AgentTermResume"))
-		assert.is_false(exists("AgentTermResumeAll"))
-		assert.is_false(exists("AgentTermResumeLast"))
-	end)
-
-	it("When resume support is partial Then only configured capabilities are registered", function()
-		local config = require("agent_term.setup.runtime_config")
-		local commands = require("agent_term.commands.registry")
-		config.setup({
-			agent = {
-				cmd = { "some-agent" },
-				resume = {
-					default = { "some-agent", "resume" },
-					all = false,
-					last = false,
-				},
-			},
-		})
-		commands.setup()
-
-		assert.is_true(exists("AgentTermResume"))
-		assert.is_false(exists("AgentTermResumeAll"))
-		assert.is_false(exists("AgentTermResumeLast"))
+		assert.is_true(exists("AgentTermToggle"))
+		assert.is_true(exists("AgentTermPanelToggle"))
+		assert.is_true(exists("AgentTermSendBufferContext"))
+		assert.is_true(exists("AgentTermInstallHooks"))
+		assert.is_true(exists("AgentTermIgnore"))
 	end)
 end)

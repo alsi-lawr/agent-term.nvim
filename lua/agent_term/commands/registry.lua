@@ -1,6 +1,4 @@
-local config = require("agent_term.setup.runtime_config")
 local dispatch = require("agent_term.runtime.dispatch")
-local enums = require("agent_term.enums")
 
 local M = {}
 
@@ -36,22 +34,7 @@ local COMMAND_SPECS = {
 	},
 	{ "AgentTermInstallHooks", "install_hooks", "Install native agent hooks", {} },
 	{ "AgentTermIgnore", "ignore", "Add .agent-term/ to .gitignore", {} },
-
-	{ "AgentTermResume", "resume", "Start resume session", {}, enums.resume_kind.DEFAULT },
-	{ "AgentTermResumeAll", "resume_all", "Start resume --all session", {}, enums.resume_kind.ALL },
-	{
-		"AgentTermResumeLast",
-		"resume_last",
-		"Start resume --last session",
-		{},
-		enums.resume_kind.LAST,
-	},
 }
-
-local function should_register(spec)
-	local resume_kind = spec[5]
-	return resume_kind == nil or config.has_resume(resume_kind)
-end
 
 function M.setup()
 	for _, spec in ipairs(COMMAND_SPECS) do
@@ -59,14 +42,12 @@ function M.setup()
 	end
 
 	for _, spec in ipairs(COMMAND_SPECS) do
-		if should_register(spec) then
-			local opts = vim.tbl_extend("force", spec[4], {
-				desc = spec[3],
-			})
-			vim.api.nvim_create_user_command(spec[1], function(command_opts)
-				dispatch.get(spec[2])(command_opts)
-			end, opts)
-		end
+		local opts = vim.tbl_extend("force", spec[4], {
+			desc = spec[3],
+		})
+		vim.api.nvim_create_user_command(spec[1], function(command_opts)
+			dispatch.get(spec[2])(command_opts)
+		end, opts)
 	end
 end
 

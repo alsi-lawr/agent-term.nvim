@@ -22,29 +22,28 @@ require("agent_term").setup({
   agent = {
     preset = "codex",
     cmd = { "codex", "--model", "gpt-5.4-mini" },
-    resume = {
-      all = false,
-    },
   },
 })
 ```
 
-Plain custom commands do not inherit preset resume or hook-context behavior. For example,
-`agent = { cmd = { "my-agent" } }` defaults to `resume = false` and paste-based context.
+Plain custom commands do not inherit preset auto-resume or hook-context behavior. For example,
+`agent = { cmd = { "my-agent" } }` starts normally and uses paste-based context.
 
 ## Preset Table
 
-| Preset | Command | Hook installer support | Resume default | Resume all | Resume last |
-| --- | --- | --- | --- | --- | --- |
-| `codex` | `{ "codex" }` | paste; native hook install supported | `{ "codex", "resume" }` | `{ "codex", "resume", "--all" }` | `{ "codex", "resume", "--last" }` |
-| `gemini` | `{ "gemini" }` | paste; native hook install supported | `{ "gemini", "-r" }` | `false` | `{ "gemini", "-r", "latest" }` |
-| `claude` | `{ "claude" }` | paste; native hook install supported | `{ "claude", "--resume" }` | `false` | `{ "claude", "--continue" }` |
-| `aider` | `{ "aider" }` | paste | `{ "aider", "--restore-chat-history" }` | `false` | `false` |
-| `copilot` | `{ "copilot" }` | paste | `{ "copilot", "--resume" }` | `false` | `{ "copilot", "--continue" }` |
-| `opencode` | `{ "opencode" }` | paste | `false` | `false` | `{ "opencode", "--continue" }` |
+| Preset | Command | Hook installer support | Auto-resume picker | Auto-resume last |
+| --- | --- | --- | --- | --- |
+| `codex` | `{ "codex" }` | paste; native hook install supported | `{ "codex", "resume" }` | `{ "codex", "resume", "--last" }` |
+| `gemini` | `{ "gemini" }` | paste; native hook install supported | `{ "gemini", "-r" }` | `{ "gemini", "-r", "latest" }` |
+| `claude` | `{ "claude" }` | paste; native hook install supported | `{ "claude", "--resume" }` | `{ "claude", "--continue" }` |
+| `aider` | `{ "aider" }` | paste | unavailable | `{ "aider", "--restore-chat-history" }` |
+| `copilot` | `{ "copilot" }` | paste | `{ "copilot", "--resume" }` | `{ "copilot", "--continue" }` |
+| `opencode` | `{ "opencode" }` | paste | unavailable | `{ "opencode", "--continue" }` |
 
-When `resume = false` or a specific resume capability is `false`, the matching resume command is not
-registered.
+`agent.auto_resume` accepts `"picker"`, `"last"`, `false`, or `nil` and defaults to unset. When a
+mode is configured for a preset, new terminal sessions start with the matching command shown above.
+Existing running sessions are reused unchanged. If `agent.cmd` is overridden, the preset's
+auto-resume arguments are appended to that command.
 
 ## Context Behavior
 
@@ -126,22 +125,18 @@ To remove installed hooks, delete the matching `UserPromptSubmit` or `BeforeMode
 `~/.codex/hooks/agent_term_context.py`, `~/.claude/hooks/agent_term_context.py`, or `~/.gemini/hooks/agent_term_context.py` script. You can
 also delete `.agent-term/context.json`; it will be recreated when hook-mode context is sent again.
 
-## Custom Resume Support
+## Auto Resume
 
-Custom agents can opt into any resume capability:
+Auto resume is a startup mode, not a separate command surface:
 
 ```lua
 require("agent_term").setup({
   agent = {
-    cmd = { "some-agent" },
-    resume = {
-      default = { "some-agent", "resume" },
-      all = false,
-      last = { "some-agent", "continue" },
-    },
+    preset = "codex",
+    auto_resume = "last", -- false | nil | "picker" | "last"
   },
 })
 ```
 
-Preset resume commands are wrappers around each backend's CLI flags. If a backend changes its CLI,
-override the preset command locally.
+The mode uses the preset command table above. Custom commands start with `agent.cmd`, even when
+`auto_resume` is set, because there is no reliable backend-neutral auto-resume flag to infer.

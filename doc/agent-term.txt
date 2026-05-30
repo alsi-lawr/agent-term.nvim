@@ -65,11 +65,6 @@ Hooks and utility:
   :AgentTermInstallHooks
   :AgentTermIgnore
 
-Resume commands are registered only when supported by your current config:
-  :AgentTermResume
-  :AgentTermResumeAll
-  :AgentTermResumeLast
-
 ==============================================================================
 CONFIGURATION                                                    *agent-term-config*
 
@@ -91,6 +86,7 @@ Example (preset with command override) >
     agent = {
       preset = "codex",
       cmd = { "codex", "--model", "gpt-5.4-mini" },
+      auto_resume = "last",
     },
   })
 <
@@ -98,13 +94,17 @@ Example (custom command + auto hook updates) >
   require("agent_term").setup({
     agent = {
       cmd = { "my-agent" },
-      resume = false,
     },
     context = {
       hook = { enabled = true },
     },
   })
 <
+`agent` keys:
+  `preset`       Preset name to inherit defaults from
+  `cmd`          Terminal command as a string list
+  `auto_resume`  false | nil | "picker" | "last"
+
 `context` keys:
   `file_path`                Path for hook context JSON file
   `target_view`              "default" | "float" | "panel"

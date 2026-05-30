@@ -1,5 +1,4 @@
 local schema = require("agent_term.setup.schema")
-local enums = require("agent_term.enums")
 
 local M = {}
 
@@ -25,7 +24,6 @@ M.specs = {
 		"send_diagnostics_context",
 		"Agent Term send diagnostics context",
 	},
-	{ "resume", "n", "resume", "Agent Term resume", enums.resume_kind.DEFAULT },
 }
 
 local known_names = {}

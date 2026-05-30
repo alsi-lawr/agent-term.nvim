@@ -21,12 +21,7 @@ local M = {}
 ---@class agent_term.AgentConfig
 ---@field preset? agent_term.SupportedAgent
 ---@field cmd? string[]
----@field resume? false|agent_term.ResumeConfig
-
----@class agent_term.ResumeConfig
----@field default? string[]|false
----@field all? string[]|false
----@field last? string[]|false
+---@field auto_resume? false|"picker"|"last"
 
 ---@class agent_term.FloatConfig
 ---@field width? number
@@ -60,19 +55,23 @@ function M.setup(user_opts)
 	return M.options
 end
 
----@param kind "default"|"all"|"last"
----@return string[]|false
-function M.resume_command(kind)
-	if type(M.options.agent.resume) ~= "table" then
-		return false
+---@return string[]|nil
+function M.auto_resume_command()
+	local agent = M.options.agent
+	if type(agent) ~= "table" or agent.auto_resume == nil or agent.auto_resume == false then
+		return nil
 	end
-	return M.options.agent.resume[kind] or false
-end
-
----@param kind "default"|"all"|"last"
----@return boolean
-function M.has_resume(kind)
-	return type(M.resume_command(kind)) == "table"
+	local preset = agent.preset
+	if type(preset) ~= "string" then
+		return nil
+	end
+	local args = setup_config.auto_resume_args_for_preset(preset, agent.auto_resume)
+	if type(args) ~= "table" or type(agent.cmd) ~= "table" then
+		return nil
+	end
+	local command = vim.deepcopy(agent.cmd)
+	vim.list_extend(command, args)
+	return command
 end
 
 return M

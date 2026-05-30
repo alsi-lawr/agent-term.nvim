@@ -8,52 +8,53 @@ local CONTEXT_TARGET_DEFAULT = "default"
 
 M.agent_presets = {
 	codex = {
+		preset = "codex",
 		cmd = { "codex" },
-		resume = {
-			default = { "codex", "resume" },
-			all = { "codex", "resume", "--all" },
-			last = { "codex", "resume", "--last" },
-		},
 	},
 	gemini = {
+		preset = "gemini",
 		cmd = { "gemini" },
-		resume = {
-			default = { "gemini", "-r" },
-			all = false,
-			last = { "gemini", "-r", "latest" },
-		},
 	},
 	claude = {
+		preset = "claude",
 		cmd = { "claude" },
-		resume = {
-			default = { "claude", "--resume" },
-			all = false,
-			last = { "claude", "--continue" },
-		},
 	},
 	aider = {
+		preset = "aider",
 		cmd = { "aider" },
-		resume = {
-			default = { "aider", "--restore-chat-history" },
-			all = false,
-			last = false,
-		},
 	},
 	copilot = {
+		preset = "copilot",
 		cmd = { "copilot" },
-		resume = {
-			default = { "copilot", "--resume" },
-			all = false,
-			last = { "copilot", "--continue" },
-		},
 	},
 	opencode = {
+		preset = "opencode",
 		cmd = { "opencode" },
-		resume = {
-			default = false,
-			all = false,
-			last = { "opencode", "--continue" },
-		},
+	},
+}
+
+local auto_resume_args = {
+	codex = {
+		picker = { "resume" },
+		last = { "resume", "--last" },
+	},
+	gemini = {
+		picker = { "-r" },
+		last = { "-r", "latest" },
+	},
+	claude = {
+		picker = { "--resume" },
+		last = { "--continue" },
+	},
+	aider = {
+		last = { "--restore-chat-history" },
+	},
+	copilot = {
+		picker = { "--resume" },
+		last = { "--continue" },
+	},
+	opencode = {
+		last = { "--continue" },
 	},
 }
 
@@ -97,7 +98,7 @@ local known_nested = {
 	agent = {
 		preset = true,
 		cmd = true,
-		resume = true,
+		auto_resume = true,
 	},
 	float = {
 		width = true,
@@ -121,12 +122,6 @@ local known_nested = {
 	},
 }
 
-local known_resume = {
-	default = true,
-	all = true,
-	last = true,
-}
-
 local known_context_hook = {
 	enabled = true,
 }
@@ -141,6 +136,11 @@ local valid_panel_positions = {
 	[enums.panel_position.LEFT] = true,
 	[enums.panel_position.RIGHT] = true,
 	[enums.panel_position.BOTTOM] = true,
+}
+
+local valid_auto_resume_modes = {
+	picker = true,
+	last = true,
 }
 
 ---@param known table<string, boolean>
@@ -249,6 +249,21 @@ local function preset_by_name(name)
 	return vim.deepcopy(preset)
 end
 
+---@param name string
+---@param mode "picker"|"last"
+---@return string[]|nil
+function M.auto_resume_args_for_preset(name, mode)
+	local modes = auto_resume_args[name]
+	if type(modes) ~= "table" then
+		return nil
+	end
+	local args = modes[mode]
+	if type(args) ~= "table" then
+		return nil
+	end
+	return vim.deepcopy(args)
+end
+
 ---@param validated table<string, any>
 local function normalize_agent_shortcuts(validated)
 	if type(validated.agent) == "string" then
@@ -322,18 +337,9 @@ local function validate_nested_keys(validated)
 		validate_nested_section(validated[section], section, known)
 	end
 
-	if type(validated.agent) == "table" and type(validated.agent.resume) == "table" then
-		validate_nested_section(validated.agent.resume, "agent.resume", known_resume)
-	end
 	if type(validated.context) == "table" and type(validated.context.hook) == "table" then
 		validate_nested_section(validated.context.hook, "context.hook", known_context_hook)
 	end
-end
-
----@param value any
----@return boolean
-local function is_table_or_false(value)
-	return value == false or type(value) == "table"
 end
 
 ---@param value any
@@ -388,30 +394,9 @@ local function validate_agent_values(validated)
 	end
 
 	strip_invalid_field(validated.agent, "cmd", "agent.cmd", is_string_list, "a non-empty string[]")
-	strip_invalid_field(
-		validated.agent,
-		"resume",
-		"agent.resume",
-		is_table_or_false,
-		"a table or false"
-	)
-
-	if type(validated.agent.resume) == "table" then
-		for _, kind in ipairs({ "default", "all", "last" }) do
-			strip_invalid_field(
-				validated.agent.resume,
-				kind,
-				("agent.resume.%s"):format(kind),
-				function(value)
-					return value == false or is_string_list(value)
-				end,
-				"a non-empty string[] or false"
-			)
-		end
-		if is_empty_table(validated.agent.resume) then
-			validated.agent.resume = nil
-		end
-	end
+	strip_invalid_field(validated.agent, "auto_resume", "agent.auto_resume", function(value)
+		return value == false or is_known_value(valid_auto_resume_modes)(value)
+	end, "`picker`, `last`, or false")
 end
 
 ---@param validated agent_term.Config
@@ -506,17 +491,6 @@ function M.validate_schema(user_opts)
 	return validated
 end
 
-local function fill_resume_capabilities(options)
-	if type(options.agent.resume) ~= "table" then
-		return
-	end
-	for _, key in ipairs({ "default", "all", "last" }) do
-		if options.agent.resume[key] == nil then
-			options.agent.resume[key] = false
-		end
-	end
-end
-
 ---@param user_opts? agent_term.Config
 ---@return agent_term.Config
 function M.build_options(user_opts)
@@ -527,19 +501,9 @@ function M.build_options(user_opts)
 	end
 	local defaults = vim.deepcopy(M.defaults)
 	if plain_custom_agent then
-		defaults.agent = {
-			resume = false,
-		}
-	end
-	if
-		type(validated) == "table"
-		and type(validated.agent) == "table"
-		and type(validated.agent.resume) == "table"
-	then
-		defaults.agent.resume = {}
+		defaults.agent = {}
 	end
 	local options = vim.tbl_deep_extend("force", defaults, validated or {})
-	fill_resume_capabilities(options)
 	return options
 end
 

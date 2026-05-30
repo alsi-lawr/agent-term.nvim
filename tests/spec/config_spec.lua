@@ -22,9 +22,8 @@ describe("Given configuration setup", function()
 		local opts = config.setup()
 
 		assert.are.same({ "codex" }, opts.agent.cmd)
-		assert.are.same({ "codex", "resume" }, opts.agent.resume.default)
-		assert.are.same({ "codex", "resume", "--all" }, opts.agent.resume.all)
-		assert.are.same({ "codex", "resume", "--last" }, opts.agent.resume.last)
+		assert.are.equal("codex", opts.agent.preset)
+		assert.is_nil(opts.agent.auto_resume)
 		assert.are.equal("right", opts.panel.position)
 		assert.are.equal(".agent-term/context.json", opts.context.file_path)
 		assert.are.equal("default", opts.context.target_view)
@@ -37,8 +36,8 @@ describe("Given configuration setup", function()
 		local opts = config.setup({
 			agent = {
 				cmd = { "gemini" },
+				auto_resume = "last",
 				bogus_cmd_key = true,
-				resume = false,
 			},
 			panel = {
 				position = "bottom",
@@ -51,7 +50,7 @@ describe("Given configuration setup", function()
 		})
 
 		assert.are.same({ "gemini" }, opts.agent.cmd)
-		assert.is_false(opts.agent.resume)
+		assert.are.equal("last", opts.agent.auto_resume)
 		assert.are.equal("bottom", opts.panel.position)
 		assert.are.equal("default", opts.context.target_view)
 		assert.is_false(opts.context.include_cursor)
@@ -70,22 +69,30 @@ describe("Given configuration setup", function()
 		assert.are.equal(vim.log.levels.WARN, notifications[2].level)
 	end)
 
-	it("When partial resume support is configured Then unavailable capabilities are false", function()
+	it("When auto resume mode is configured Then it is preserved", function()
 		local config = require("agent_term.setup.runtime_config")
 		local opts = config.setup({
 			agent = {
 				cmd = { "some-agent" },
-				resume = {
-					default = { "some-agent", "resume" },
-					all = false,
-					last = false,
-				},
+				auto_resume = "picker",
 			},
 		})
 
-		assert.are.same({ "some-agent", "resume" }, opts.agent.resume.default)
-		assert.is_false(config.has_resume("all"))
-		assert.is_false(config.has_resume("last"))
+		assert.are.same({ "some-agent" }, opts.agent.cmd)
+		assert.are.equal("picker", opts.agent.auto_resume)
+	end)
+
+	it("When auto resume is explicitly false Then it is preserved as disabled", function()
+		local config = require("agent_term.setup.runtime_config")
+		local opts = config.setup({
+			agent = {
+				cmd = { "some-agent" },
+				auto_resume = false,
+			},
+		})
+
+		assert.are.same({ "some-agent" }, opts.agent.cmd)
+		assert.is_false(opts.agent.auto_resume)
 	end)
 
 	it(
@@ -97,9 +104,8 @@ describe("Given configuration setup", function()
 			})
 
 			assert.are.same({ "gemini" }, opts.agent.cmd)
-			assert.are.same({ "gemini", "-r" }, opts.agent.resume.default)
-			assert.is_false(opts.agent.resume.all)
-			assert.are.same({ "gemini", "-r", "latest" }, opts.agent.resume.last)
+			assert.are.equal("gemini", opts.agent.preset)
+			assert.is_nil(opts.agent.auto_resume)
 		end
 	)
 
@@ -111,9 +117,8 @@ describe("Given configuration setup", function()
 		})
 
 		assert.are.same({ "claude" }, opts.agent.cmd)
-		assert.are.same({ "claude", "--resume" }, opts.agent.resume.default)
-		assert.is_false(opts.agent.resume.all)
-		assert.are.same({ "claude", "--continue" }, opts.agent.resume.last)
+		assert.are.equal("claude", opts.agent.preset)
+		assert.is_nil(opts.agent.auto_resume)
 	end)
 
 	it(
@@ -124,16 +129,13 @@ describe("Given configuration setup", function()
 				agent = {
 					preset = "codex",
 					cmd = { "codex", "--model", "gpt-5.4-mini" },
-					resume = {
-						all = false,
-					},
+					auto_resume = "last",
 				},
 			})
 
 			assert.are.same({ "codex", "--model", "gpt-5.4-mini" }, opts.agent.cmd)
-			assert.are.same({ "codex", "resume" }, opts.agent.resume.default)
-			assert.is_false(opts.agent.resume.all)
-			assert.are.same({ "codex", "resume", "--last" }, opts.agent.resume.last)
+			assert.are.equal("codex", opts.agent.preset)
+			assert.are.equal("last", opts.agent.auto_resume)
 		end
 	)
 
@@ -144,12 +146,11 @@ describe("Given configuration setup", function()
 		})
 
 		assert.are.same({ "aider" }, opts.agent.cmd)
-		assert.are.same({ "aider", "--restore-chat-history" }, opts.agent.resume.default)
-		assert.is_false(opts.agent.resume.all)
-		assert.is_false(opts.agent.resume.last)
+		assert.are.equal("aider", opts.agent.preset)
+		assert.is_nil(opts.agent.auto_resume)
 	end)
 
-	it("When agent is set to copilot Then paste context is used with resume support", function()
+	it("When agent is set to copilot Then paste context is used by default", function()
 		local config = require("agent_term.setup.runtime_config")
 		local enums = require("agent_term.enums")
 		local opts = config.setup({
@@ -157,27 +158,21 @@ describe("Given configuration setup", function()
 		})
 
 		assert.are.same({ "copilot" }, opts.agent.cmd)
-		assert.are.same({ "copilot", "--resume" }, opts.agent.resume.default)
-		assert.is_false(opts.agent.resume.all)
-		assert.are.same({ "copilot", "--continue" }, opts.agent.resume.last)
-		assert.is_true(config.has_resume("default"))
-		assert.is_false(config.has_resume("all"))
-		assert.is_true(config.has_resume("last"))
+		assert.are.equal("copilot", opts.agent.preset)
+		assert.is_nil(opts.agent.auto_resume)
+		assert.is_false(opts.context.hook.enabled)
 	end)
 
-	it("When agent is set to opencode Then paste context is used with continue support", function()
+	it("When agent is set to opencode Then paste context is used by default", function()
 		local config = require("agent_term.setup.runtime_config")
 		local opts = config.setup({
 			agent = "opencode",
 		})
 
 		assert.are.same({ "opencode" }, opts.agent.cmd)
-		assert.is_false(opts.agent.resume.default)
-		assert.is_false(opts.agent.resume.all)
-		assert.are.same({ "opencode", "--continue" }, opts.agent.resume.last)
-		assert.is_false(config.has_resume("default"))
-		assert.is_false(config.has_resume("all"))
-		assert.is_true(config.has_resume("last"))
+		assert.are.equal("opencode", opts.agent.preset)
+		assert.is_nil(opts.agent.auto_resume)
+		assert.is_false(opts.context.hook.enabled)
 	end)
 
 	it("When agent cmd is custom without preset Then neutral backend defaults are used", function()
@@ -189,8 +184,8 @@ describe("Given configuration setup", function()
 		})
 
 		assert.are.same({ "gemini" }, opts.agent.cmd)
-		assert.is_false(opts.agent.resume)
-		assert.is_false(config.has_resume("default"))
+		assert.is_nil(opts.agent.auto_resume)
+		assert.is_nil(opts.agent.preset)
 	end)
 
 	it("When unknown agent config keys are provided Then they are ignored", function()
@@ -198,18 +193,14 @@ describe("Given configuration setup", function()
 		local opts = config.setup({
 			agent = {
 				cmd = { "custom-agent" },
+				auto_resume = "last",
 				transport = "hook",
-				resume = {
-					default = { "custom-agent", "resume" },
-				},
 			},
 		})
 
 		assert.are.same({ "custom-agent" }, opts.agent.cmd)
+		assert.are.equal("last", opts.agent.auto_resume)
 		assert.is_false(opts.context.hook.enabled)
-		assert.are.same({ "custom-agent", "resume" }, opts.agent.resume.default)
-		assert.is_false(opts.agent.resume.all)
-		assert.is_false(opts.agent.resume.last)
 		assert.are.equal(1, #notifications)
 		assert.match(
 			"Unknown agent%-term%.nvim config keys ignored in `agent`: transport",
@@ -285,9 +276,7 @@ describe("Given configuration setup", function()
 		local opts = config.setup({
 			agent = {
 				cmd = "codex",
-				resume = {
-					default = "resume",
-				},
+				auto_resume = "yes",
 				context = {
 					mode = "silent",
 				},
@@ -307,7 +296,7 @@ describe("Given configuration setup", function()
 		})
 
 		assert.are.same({ "codex" }, opts.agent.cmd)
-		assert.are.same({ "codex", "resume" }, opts.agent.resume.default)
+		assert.is_nil(opts.agent.auto_resume)
 		assert.are.equal(".agent-term/context.json", opts.context.file_path)
 		assert.are.equal(0.85, opts.float.width)
 		assert.are.equal("right", opts.panel.position)

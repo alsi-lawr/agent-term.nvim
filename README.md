@@ -36,7 +36,7 @@
   <tr>
     <td><strong>Backend presets</strong><br />Start quickly with Codex, Gemini, Claude, Aider, Copilot, or Opencode.</td>
     <td><strong>Custom agents</strong><br />Run any compatible interactive terminal command.</td>
-    <td><strong>Resume aware</strong><br />Registers resume commands only when the configured backend supports them.</td>
+    <td><strong>Automatic resume</strong><br />Optionally start supported presets through a picker or last-session command.</td>
   </tr>
 </table>
 
@@ -53,7 +53,7 @@ own slash commands, menus, model switching, permission flows, hooks, highlightin
 and session behavior when supported by the agent TUI.
 
 The plugin adds a Neovim bridge around that native UI: one persistent terminal session, float/panel
-views, editor context capture, diagnostics/selection/buffer metadata, keymaps, resume/kill helpers,
+views, editor context capture, diagnostics/selection/buffer metadata, keymaps, startup/kill helpers,
 and optional native hook installation.
 
 ## Requirements
@@ -103,8 +103,8 @@ require("agent_term").setup({
 })
 ```
 
-Custom commands are supported too. Plain custom commands default to paste-based context and no
-resume support unless configured explicitly:
+Custom commands are supported too. Plain custom commands default to paste-based context and normal
+startup:
 
 ```lua
 require("agent_term").setup({
@@ -125,14 +125,18 @@ require("agent_term").setup({
 Presets are convenience defaults, not a guarantee of feature parity across tools. Exact commands and
 caveats are documented in [docs/backends.md](docs/backends.md).
 
-| Preset | Command | Hook installer support | Resume summary |
-| --- | --- | --- | --- |
-| `codex` | `codex` | paste; native hook install supported | default, all, last |
-| `gemini` | `gemini` | paste; native hook install supported | default, last |
-| `claude` | `claude` | paste; native hook install supported | default, last |
-| `aider` | `aider` | paste | default |
-| `copilot` | `copilot` | paste | default, last |
-| `opencode` | `opencode` | paste | last |
+| Preset | Command | Hook installer support | Auto-resume picker | Auto-resume last |
+| --- | --- | --- | --- | --- |
+| `codex` | `codex` | paste; native hook install supported | `codex resume` | `codex resume --last` |
+| `gemini` | `gemini` | paste; native hook install supported | `gemini -r` | `gemini -r latest` |
+| `claude` | `claude` | paste; native hook install supported | `claude --resume` | `claude --continue` |
+| `aider` | `aider` | paste | unavailable | `aider --restore-chat-history` |
+| `copilot` | `copilot` | paste | `copilot --resume` | `copilot --continue` |
+| `opencode` | `opencode` | paste | unavailable | `opencode --continue` |
+
+`agent.auto_resume` accepts `"picker"`, `"last"`, `false`, or `nil`. The default is unset.
+When a preset command is overridden, the selected auto-resume arguments are appended to
+`agent.cmd`.
 
 Supported enum values are available at `require("agent_term.enums").agent`.
 
@@ -232,8 +236,6 @@ target reuses an open panel when one exists, otherwise it opens a float.
 - `:AgentTermSendDiagnosticsContext`: send compact diagnostics for the current buffer.
 - `:AgentTermInstallHooks`: install global native hooks for supported agents.
 - `:AgentTermIgnore`: add `.agent-term/` to `.gitignore` (idempotent).
-- `:AgentTermResume`, `:AgentTermResumeAll`, `:AgentTermResumeLast`: registered only when the
-  configured backend supports that resume capability.
 
 Float-specific commands are also available as `:AgentTermFloatOpen`, `:AgentTermFloatClose`,
 `:AgentTermFloatToggle`, and `:AgentTermFloatFocus`. Panel-specific commands use the same pattern
@@ -244,13 +246,13 @@ with `Panel`.
 - `Agent command not found`: check `:echo executable('your-agent-command')` or configure
   `agent.cmd`.
 - No selection context: reselect text or run `:'<,'>AgentTermSendSelectionContext`.
-- Resume command missing: the preset or custom config does not support that resume capability.
-- Resume refused: a session is already running; run `:AgentTermKill` first.
+- `agent.auto_resume = "picker"` or `"last"` starts known presets with that auto-resume mode.
+  Custom commands start normally because there is no preset behavior to infer.
 - To enable automatic native hook updates, install hooks and set `context.hook.enabled = true`.
 
 ## Advanced Docs
 
-- [Backend presets](docs/backends.md): exact preset commands, resume capabilities, context modes,
+- [Backend presets](docs/backends.md): exact preset commands, auto-resume behavior, context modes,
   and backend caveats.
 - [Contribution guide](CONTRIBUTING.md): development setup, project layout, backend-change
   expectations, testing commands, coverage notes, and PR guidance.

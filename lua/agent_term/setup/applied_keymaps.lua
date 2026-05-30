@@ -26,8 +26,7 @@ function M.setup()
 
 	for _, spec in ipairs(setup_keymaps.specs) do
 		local key = maps[spec[1]]
-		local resume_kind = spec[5]
-		if key and (resume_kind == nil or config.has_resume(resume_kind)) then
+		if key then
 			vim.keymap.set(spec[2], key, dispatch.get(spec[3]), { desc = spec[4] })
 			applied_maps[#applied_maps + 1] = { mode = spec[2], lhs = key }
 		end
