@@ -14,21 +14,21 @@ Hide
 Type "clear"
 Enter
 
-Type `export CODEX_NVIM_REPO="$PWD"`
+Type `export AGENT_TERM_NVIM_REPO="$PWD"`
 Enter
-Type "rm -rf /tmp/codex-nvim-vhs-demo && mkdir -p /tmp/codex-nvim-vhs-demo"
+Type "rm -rf /tmp/agent-term-nvim-vhs-demo && mkdir -p /tmp/agent-term-nvim-vhs-demo"
 Enter
-Type "cd /tmp/codex-nvim-vhs-demo"
+Type "cd /tmp/agent-term-nvim-vhs-demo"
 Enter
-Type `printf '%s\n' 'local function greet(name)' '  return "Hello, " .. (name or "stranger")' 'end' '' 'print(greet("Codex"))' > demo.lua`
+Type `printf '%s\n' 'local function greet(name)' '  return "Hello, " .. (name or "stranger")' 'end' '' 'print(greet("Agent Term"))' > demo.lua`
 Enter
 Type "cat > init.lua <<'EOF'"
 Enter
-Type `vim.opt.runtimepath:prepend(os.getenv("CODEX_NVIM_REPO"))`
+Type `vim.opt.runtimepath:prepend(os.getenv("AGENT_TERM_NVIM_REPO"))`
 Enter
-Type `require("codex").setup({`
+Type `require("agent_term").setup({`
 Enter
-Type `  codex = {`
+Type `  agent = {`
 Enter
 Type `    cmd = { "codex", "--model", "gpt-5.4-mini", "-c", [[model_reasoning_effort="low"]] },`
 Enter
@@ -61,7 +61,7 @@ Type@90ms "nvim -u init.lua demo.lua"
 Enter
 Sleep 2s
 
-Type@90ms ":CodexFloatOpen"
+Type@90ms ":AgentTermFloatOpen"
 Enter
 Sleep 4s
 
@@ -72,33 +72,33 @@ Sleep 8s
 Escape
 Sleep 700ms
 
-Type@90ms ":CodexFloatClose"
+Type@90ms ":AgentTermFloatClose"
 Enter
 Sleep 1s
 
-Type@90ms ":CodexPanelOpen"
+Type@90ms ":AgentTermPanelOpen"
 Enter
 Sleep 3s
 
 Escape
 Sleep 700ms
 
-Type@90ms ":CodexSendBufferContext"
+Type@90ms ":AgentTermSendBufferContext"
 Enter
 Sleep 1.5s
 
-Type@90ms ":CodexPanelToggle"
+Type@90ms ":AgentTermPanelToggle"
 Enter
 Sleep 1s
 
-Type@90ms ":CodexFloatOpen"
+Type@90ms ":AgentTermFloatOpen"
 Enter
 Sleep 3s
 
 Escape
 Sleep 700ms
 
-Type@90ms ":CodexClose"
+Type@90ms ":AgentTermClose"
 Enter
 Sleep 800ms
 
