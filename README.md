@@ -181,6 +181,63 @@ codex.resume_all()
 codex.resume_last()
 ```
 
+## Testing
+
+This repo uses Plenary's busted-style Neovim test harness.
+
+Why Plenary (and not `mini.test`):
+
+- The plugin tests need real Neovim API/state (`vim.api`, windows, buffers, diagnostics, user commands).
+- Plenary's `PlenaryBustedDirectory` is the most common Neovim plugin convention for this and keeps setup small.
+- `mini.test` is good for pure-Lua/unit-style suites, but it does not simplify this plugin's Neovim-hosted integration cases enough to justify a migration right now.
+
+Prerequisite:
+
+- [`nvim-lua/plenary.nvim`](https://github.com/nvim-lua/plenary.nvim) installed (for example via lazy.nvim).
+- `stylua` installed for formatting.
+- `luacheck` installed for linting.
+
+Run the full suite:
+
+```sh
+./run_tests.sh
+```
+
+Raw Neovim command (no wrapper):
+
+```sh
+nvim --headless -u tests/minimal_init.lua -i NONE \
+  -c "PlenaryBustedDirectory tests/spec { minimal_init = 'tests/minimal_init.lua' }" \
+  -c "qa"
+```
+
+If Plenary is not in a standard path, point the harness at it:
+
+```sh
+PLENARY_PATH=/path/to/plenary.nvim ./run_tests.sh
+```
+
+Formatting and linting:
+
+```sh
+stylua --check lua tests
+luacheck lua tests
+```
+
+Editor diagnostics:
+
+- `.luarc.json` provides project-level LuaLS settings for Neovim and Busted/Plenary globals.
+- `tests/types/busted.lua` declares test globals in-repo so language tooling does not rely on local editor assumptions.
+
+Optional coverage for pure Lua modules only:
+
+- Keep Neovim-hosted tests as the default path.
+- If you add pure Lua specs (for example under `tests/pure`), you can run coverage separately:
+
+```sh
+LUA_INIT='require("luacov")' busted tests/pure
+```
+
 ## Troubleshooting
 
 - `Codex command not found`: check `:echo executable('codex')` or configure `codex.cmd`.
