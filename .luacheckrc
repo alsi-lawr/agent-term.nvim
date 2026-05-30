@@ -1,24 +1,14 @@
-std = "lua51"
-globals = {
-	"vim",
-}
-
-files["tests/spec/**/*.lua"] = {
-	std = "lua51+busted",
+files["lua/**"] = {
+	std = "luajit",
 	globals = {
 		"vim",
 	},
 }
 
-files["tests/minimal_init.lua"] = {
+files["tests/**"] = {
+	std = "luajit+busted",
 	globals = {
 		"vim",
-	},
-}
-
-files["tests/types/*.lua"] = {
-	std = "none",
-	globals = {
 		"describe",
 		"it",
 		"before_each",

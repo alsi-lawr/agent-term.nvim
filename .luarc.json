@@ -14,11 +14,13 @@
     "spy",
     "stub",
     "mock",
-    "match"
+    "match",
+    "files",
+    "globals",
+    "std"
   ],
   "workspace.library": [
     "${workspaceFolder}/lua",
-    "${workspaceFolder}/tests/types",
     "${3rd}/luv/library",
     "${3rd}/busted/library",
     "${3rd}/luassert/library"
