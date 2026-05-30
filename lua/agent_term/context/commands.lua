@@ -13,8 +13,7 @@ end
 
 ---@param kind "buffer"|"selection"|"diagnostics"
 ---@param builder fun(): string|nil, string|nil
----@param force_paste? boolean
-local function send_context(kind, builder, force_paste)
+local function send_context(kind, builder)
 	local message, err = builder()
 	if not message then
 		notify.info(err)
@@ -25,7 +24,7 @@ local function send_context(kind, builder, force_paste)
 		return
 	end
 
-	local sent, used_hook, hook_failure = submission.submit(message, kind, force_paste)
+	local sent, used_hook, hook_failure = submission.submit(message, kind)
 	if not sent then
 		if used_hook and hook_failure then
 			notify.error(("Failed to write backend hook context: %s"):format(hook_failure))
@@ -45,7 +44,7 @@ end
 function M.send_buffer_context()
 	send_context("buffer", function()
 		return captured_context.resolve_message("buffer", context.buffer_message, is_panel_focused())
-	end, true)
+	end)
 end
 
 ---@param opts? vim.api.keyset.create_user_command.command_args
@@ -54,7 +53,7 @@ function M.send_selection_context(opts)
 		return captured_context.resolve_message("selection", function()
 			return context.selection_message(opts)
 		end, is_panel_focused())
-	end, true)
+	end)
 end
 
 function M.send_diagnostics_context()

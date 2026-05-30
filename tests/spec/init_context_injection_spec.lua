@@ -115,11 +115,6 @@ describe("Given panel silent context injection", function()
 	it("When sending context from panel Then submission uses last captured context", function()
 		plugin.setup({
 			context = { target_view = "panel" },
-			agent = {
-				context = {
-					mode = "paste",
-				},
-			},
 		})
 		plugin.panel_open()
 		vim.api.nvim_buf_set_name(terminal_buf, "/tmp/panel-terminal.txt")
@@ -132,13 +127,7 @@ describe("Given panel silent context injection", function()
 	end)
 
 	it("When buffer context starts a default float Then source buffer context is sent", function()
-		plugin.setup({
-			agent = {
-				context = {
-					mode = "paste",
-				},
-			},
-		})
+		plugin.setup({})
 		state.buf = nil
 		state.job_id = nil
 
@@ -152,13 +141,7 @@ describe("Given panel silent context injection", function()
 	it(
 		"When selection context starts a default float Then source selection context is sent",
 		function()
-			plugin.setup({
-				agent = {
-					context = {
-						mode = "paste",
-					},
-				},
-			})
+			plugin.setup({})
 			state.buf = nil
 			state.job_id = nil
 
@@ -176,11 +159,6 @@ describe("Given panel silent context injection", function()
 		function()
 			plugin.setup({
 				context = { target_view = "panel" },
-				agent = {
-					context = {
-						mode = "paste",
-					},
-				},
 			})
 			local source_win = vim.api.nvim_get_current_win()
 			plugin.panel_open()
@@ -204,11 +182,6 @@ describe("Given panel silent context injection", function()
 	it("When normal navigation returns to panel Then the latest source buffer is captured", function()
 		plugin.setup({
 			context = { target_view = "panel" },
-			agent = {
-				context = {
-					mode = "paste",
-				},
-			},
 		})
 		local source_win = vim.api.nvim_get_current_win()
 		plugin.panel_open()
@@ -258,11 +231,6 @@ describe("Given panel silent context injection", function()
 			})
 			plugin.setup({
 				context = { target_view = "panel" },
-				agent = {
-					context = {
-						mode = "paste",
-					},
-				},
 			})
 			plugin.panel_open()
 
@@ -285,13 +253,7 @@ describe("Given panel silent context injection", function()
 				message = "format",
 			},
 		})
-		plugin.setup({
-			agent = {
-				context = {
-					mode = "paste",
-				},
-			},
-		})
+		plugin.setup({})
 		state.buf = nil
 		state.job_id = nil
 
@@ -315,11 +277,6 @@ describe("Given panel silent context injection", function()
 		})
 		plugin.setup({
 			context = { target_view = "panel" },
-			agent = {
-				context = {
-					mode = "paste",
-				},
-			},
 		})
 		state.buf = nil
 		state.job_id = nil
@@ -331,28 +288,31 @@ describe("Given panel silent context injection", function()
 		assert.is_not_nil(sent_messages[1]:match("test: note"))
 	end)
 
-	it("When hook mode is enabled Then context is written instead of visibly pasted", function()
-		plugin.setup({
-			context = { target_view = "panel" },
-			agent = {
+	it(
+		"When automatic hook updates are enabled Then manual buffer context is still pasted",
+		function()
+			plugin.setup({
 				context = {
-					mode = "hook",
+					target_view = "panel",
+					hook = {
+						enabled = true,
+					},
 				},
-			},
-		})
-		plugin.panel_open()
+			})
+			plugin.panel_open()
 
-		plugin.send_buffer_context()
+			plugin.send_buffer_context()
 
-		assert.are.equal(1, #sent_messages)
-		assert.is_not_nil(sent_messages[1]:match("file: /tmp/panel%-source%.lua"))
-	end)
+			assert.are.equal(1, #sent_messages)
+			assert.is_not_nil(sent_messages[1]:match("file: /tmp/panel%-source%.lua"))
+		end
+	)
 
-	it("When hook mode starts a default float Then source context is written", function()
+	it("When automatic hook updates start a default float Then source context is pasted", function()
 		plugin.setup({
-			agent = {
-				context = {
-					mode = "hook",
+			context = {
+				hook = {
+					enabled = true,
 				},
 			},
 		})
@@ -365,54 +325,48 @@ describe("Given panel silent context injection", function()
 		assert.is_not_nil(sent_messages[1]:match("file: /tmp/panel%-source%.lua"))
 	end)
 
-	it(
-		"When hook mode has a panel open but source is focused Then current source context is written",
-		function()
-			plugin.setup({
-				context = { target_view = "panel" },
-				agent = {
-					context = {
-						mode = "hook",
-					},
+	it("When automatic hook updates with panel open still paste current source context", function()
+		plugin.setup({
+			context = {
+				target_view = "panel",
+				hook = {
+					enabled = true,
 				},
-			})
-			local source_win = vim.api.nvim_get_current_win()
-			plugin.panel_open()
+			},
+		})
+		local source_win = vim.api.nvim_get_current_win()
+		plugin.panel_open()
 
-			local other_buf = vim.api.nvim_create_buf(true, false)
-			vim.api.nvim_buf_set_name(other_buf, "/tmp/hook-source.lua")
-			vim.api.nvim_buf_set_lines(other_buf, 0, -1, false, { "hooked" })
-			vim.api.nvim_set_current_win(source_win)
-			vim.api.nvim_set_current_buf(other_buf)
+		local other_buf = vim.api.nvim_create_buf(true, false)
+		vim.api.nvim_buf_set_name(other_buf, "/tmp/hook-source.lua")
+		vim.api.nvim_buf_set_lines(other_buf, 0, -1, false, { "hooked" })
+		vim.api.nvim_set_current_win(source_win)
+		vim.api.nvim_set_current_buf(other_buf)
 
-			plugin.send_buffer_context()
+		plugin.send_buffer_context()
 
-			assert.are.equal(1, #sent_messages)
-			assert.is_not_nil(sent_messages[1]:match("file: /tmp/hook%-source%.lua"))
-			assert.is_nil(sent_messages[1]:match("file: /tmp/panel%-source%.lua"))
+		assert.are.equal(1, #sent_messages)
+		assert.is_not_nil(sent_messages[1]:match("file: /tmp/hook%-source%.lua"))
+		assert.is_nil(sent_messages[1]:match("file: /tmp/panel%-source%.lua"))
 
-			pcall(vim.api.nvim_buf_delete, other_buf, { force = true })
-		end
-	)
+		pcall(vim.api.nvim_buf_delete, other_buf, { force = true })
+	end)
 
-	it(
-		"When hook mode sends selection context from a panel Then captured selection is written",
-		function()
-			plugin.setup({
-				context = { target_view = "panel" },
-				agent = {
-					context = {
-						mode = "hook",
-					},
+	it("When automatic hook updates are enabled Then panel selection context is pasted", function()
+		plugin.setup({
+			context = {
+				target_view = "panel",
+				hook = {
+					enabled = true,
 				},
-			})
-			plugin.panel_open()
+			},
+		})
+		plugin.panel_open()
 
-			plugin.send_selection_context({})
+		plugin.send_selection_context({})
 
-			assert.are.equal(1, #sent_messages)
-			assert.is_not_nil(sent_messages[1]:match("selection: lines 2%-4"))
-			assert.is_not_nil(sent_messages[1]:match("file: /tmp/panel%-source%.lua"))
-		end
-	)
+		assert.are.equal(1, #sent_messages)
+		assert.is_not_nil(sent_messages[1]:match("selection: lines 2%-4"))
+		assert.is_not_nil(sent_messages[1]:match("file: /tmp/panel%-source%.lua"))
+	end)
 end)

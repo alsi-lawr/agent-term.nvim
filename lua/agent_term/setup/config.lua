@@ -9,9 +9,6 @@ local CONTEXT_TARGET_DEFAULT = "default"
 M.agent_presets = {
 	codex = {
 		cmd = { "codex" },
-		context = {
-			mode = "paste",
-		},
 		resume = {
 			default = { "codex", "resume" },
 			all = { "codex", "resume", "--all" },
@@ -20,9 +17,6 @@ M.agent_presets = {
 	},
 	gemini = {
 		cmd = { "gemini" },
-		context = {
-			mode = "paste",
-		},
 		resume = {
 			default = { "gemini", "-r" },
 			all = false,
@@ -31,9 +25,6 @@ M.agent_presets = {
 	},
 	claude = {
 		cmd = { "claude" },
-		context = {
-			mode = "paste",
-		},
 		resume = {
 			default = { "claude", "--resume" },
 			all = false,
@@ -42,9 +33,6 @@ M.agent_presets = {
 	},
 	aider = {
 		cmd = { "aider" },
-		context = {
-			mode = "paste",
-		},
 		resume = {
 			default = { "aider", "--restore-chat-history" },
 			all = false,
@@ -53,9 +41,6 @@ M.agent_presets = {
 	},
 	copilot = {
 		cmd = { "copilot" },
-		context = {
-			mode = "paste",
-		},
 		resume = {
 			default = { "copilot", "--resume" },
 			all = false,
@@ -64,9 +49,6 @@ M.agent_presets = {
 	},
 	opencode = {
 		cmd = { "opencode" },
-		context = {
-			mode = "paste",
-		},
 		resume = {
 			default = false,
 			all = false,
@@ -90,6 +72,9 @@ M.defaults = {
 	context = {
 		file_path = ".agent-term/context.json",
 		target_view = CONTEXT_TARGET_DEFAULT,
+		hook = {
+			enabled = false,
+		},
 		include_file_path = true,
 		include_filetype = true,
 		include_cursor = true,
@@ -113,7 +98,6 @@ local known_nested = {
 		preset = true,
 		cmd = true,
 		resume = true,
-		context = true,
 	},
 	float = {
 		width = true,
@@ -128,6 +112,7 @@ local known_nested = {
 	context = {
 		file_path = true,
 		target_view = true,
+		hook = true,
 		include_file_path = true,
 		include_filetype = true,
 		include_cursor = true,
@@ -142,8 +127,8 @@ local known_resume = {
 	last = true,
 }
 
-local known_agent_context = {
-	mode = true,
+local known_context_hook = {
+	enabled = true,
 }
 
 local valid_context_targets = {
@@ -156,11 +141,6 @@ local valid_panel_positions = {
 	[enums.panel_position.LEFT] = true,
 	[enums.panel_position.RIGHT] = true,
 	[enums.panel_position.BOTTOM] = true,
-}
-
-local valid_agent_context_modes = {
-	paste = true,
-	hook = true,
 }
 
 ---@param known table<string, boolean>
@@ -345,8 +325,8 @@ local function validate_nested_keys(validated)
 	if type(validated.agent) == "table" and type(validated.agent.resume) == "table" then
 		validate_nested_section(validated.agent.resume, "agent.resume", known_resume)
 	end
-	if type(validated.agent) == "table" and type(validated.agent.context) == "table" then
-		validate_nested_section(validated.agent.context, "agent.context", known_agent_context)
+	if type(validated.context) == "table" and type(validated.context.hook) == "table" then
+		validate_nested_section(validated.context.hook, "context.hook", known_context_hook)
 	end
 end
 
@@ -432,23 +412,6 @@ local function validate_agent_values(validated)
 			validated.agent.resume = nil
 		end
 	end
-
-	strip_invalid_field(validated.agent, "context", "agent.context", function(value)
-		return type(value) == "table"
-	end, "a table")
-
-	if type(validated.agent.context) == "table" then
-		strip_invalid_field(
-			validated.agent.context,
-			"mode",
-			"agent.context.mode",
-			is_known_value(valid_agent_context_modes),
-			"`paste` or `hook`"
-		)
-		if is_empty_table(validated.agent.context) then
-			validated.agent.context = nil
-		end
-	end
 end
 
 ---@param validated agent_term.Config
@@ -488,6 +451,21 @@ local function validate_option_values(validated)
 			is_known_value(valid_context_targets),
 			"`default`, `float`, or `panel`"
 		)
+		strip_invalid_field(validated.context, "hook", "context.hook", function(value)
+			return type(value) == "table"
+		end, "a table")
+		if type(validated.context.hook) == "table" then
+			strip_invalid_field(
+				validated.context.hook,
+				"enabled",
+				"context.hook.enabled",
+				is_boolean,
+				"a boolean"
+			)
+			if is_empty_table(validated.context.hook) then
+				validated.context.hook = nil
+			end
+		end
 		for _, key in ipairs({
 			"include_file_path",
 			"include_filetype",
@@ -551,9 +529,6 @@ function M.build_options(user_opts)
 	if plain_custom_agent then
 		defaults.agent = {
 			resume = false,
-			context = {
-				mode = "paste",
-			},
 		}
 	end
 	if

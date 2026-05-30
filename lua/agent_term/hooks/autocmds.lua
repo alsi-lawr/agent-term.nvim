@@ -6,12 +6,10 @@ local state = require("agent_term.runtime.state")
 local M = {}
 local augroup = vim.api.nvim_create_augroup("agent_term_hooks", { clear = true })
 
-local function backend_context_mode()
-	local agent = config.options.agent
-	if type(agent) ~= "table" or type(agent.context) ~= "table" then
-		return "paste"
-	end
-	return agent.context.mode or "paste"
+local function auto_hook_enabled()
+	local context = config.options.context
+	local hook = type(context) == "table" and context.hook or nil
+	return type(hook) == "table" and hook.enabled == true
 end
 
 local function is_editor_buffer(bufnr)
@@ -22,7 +20,7 @@ local function is_editor_buffer(bufnr)
 end
 
 local function update_context()
-	if backend_context_mode() ~= "hook" or not state.has_running_job() then
+	if not auto_hook_enabled() or not state.has_running_job() then
 		return
 	end
 
@@ -56,7 +54,7 @@ local function update_context()
 end
 
 local function clear_context()
-	if backend_context_mode() ~= "hook" then
+	if not auto_hook_enabled() then
 		return
 	end
 	-- Mark stale by writing empty content. The python hook script

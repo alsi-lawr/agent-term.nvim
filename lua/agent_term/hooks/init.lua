@@ -27,6 +27,12 @@ local function context_file_path()
 	return ".agent-term/context.json"
 end
 
+local function auto_hook_enabled()
+	local context = config.options.context
+	local hook = type(context) == "table" and context.hook or nil
+	return type(hook) == "table" and hook.enabled == true
+end
+
 function M.install()
 	local agent_name = command_name()
 	local installer = agent_name and installers[agent_name] or nil
@@ -47,8 +53,8 @@ function M.install()
 		return false
 	end
 
-	config.options.agent.context = config.options.agent.context or {}
-	config.options.agent.context.mode = "hook"
+	config.options.context.hook = config.options.context.hook or {}
+	config.options.context.hook.enabled = true
 
 	local msg
 	if result and result.changed then
@@ -69,10 +75,9 @@ end
 function M.detect()
 	local agent_name = command_name()
 	local installer = agent_name and installers[agent_name] or nil
-	local current_mode = config.options.agent.context and config.options.agent.context.mode
 
-	-- Only perform safety check/fallback if the user has opted-in to 'hook' mode
-	if current_mode ~= "hook" then
+	-- Only perform safety check/fallback if automatic hook updates are enabled.
+	if not auto_hook_enabled() then
 		return false
 	end
 
@@ -85,11 +90,11 @@ function M.detect()
 		context_file_path = context_file_path(),
 	}) then
 		-- Fallback to paste mode if hooks are not actually installed on disk
-		config.options.agent.context.mode = "paste"
+		config.options.context.hook.enabled = false
 		notify.warn(
 			(
-				"Hook mode enabled for `%s` but native hooks were not found. "
-				.. "Falling back to paste mode. Run :AgentTermInstallHooks to install."
+				"Automatic hook updates enabled for `%s` but native hooks were not found. "
+				.. "Disabling automatic hook updates. Run :AgentTermInstallHooks to install."
 			):format(agent_name)
 		)
 		return true

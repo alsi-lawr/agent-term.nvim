@@ -34,7 +34,7 @@ Plain custom commands do not inherit preset resume or hook-context behavior. For
 
 ## Preset Table
 
-| Preset | Command | Context mode | Resume default | Resume all | Resume last |
+| Preset | Command | Hook installer support | Resume default | Resume all | Resume last |
 | --- | --- | --- | --- | --- | --- |
 | `codex` | `{ "codex" }` | paste; native hook install supported | `{ "codex", "resume" }` | `{ "codex", "resume", "--all" }` | `{ "codex", "resume", "--last" }` |
 | `gemini` | `{ "gemini" }` | paste; native hook install supported | `{ "gemini", "-r" }` | `false` | `{ "gemini", "-r", "latest" }` |
@@ -46,40 +46,42 @@ Plain custom commands do not inherit preset resume or hook-context behavior. For
 When `resume = false` or a specific resume capability is `false`, the matching resume command is not
 registered.
 
-## Context Modes
+## Context Behavior
 
-**Paste mode** sends context text to the running terminal channel with `nvim_chan_send`.
+Manual context commands always send context text to the running terminal channel with
+`nvim_chan_send`.
 
-**Hook mode** writes the latest context command payload to `context.file_path` (default:
-`.agent-term/context.json`) and does not paste anything into the terminal. A native agent hook reads
-that file during the agent's `UserPromptSubmit` event and returns it as `additionalContext`.
+Optional hook integration writes the latest context command payload to `context.file_path` (default:
+`.agent-term/context.json`) for native hook consumers.
 
-In Hook Mode, `agent-term.nvim` automatically updates the context file in the background as you work:
+When `context.hook.enabled = true`, `agent-term.nvim` automatically updates the context file in the
+background as you work:
 - **On Buffer Switch**: Updates context for the new file.
 - **On Diagnostics Change**: Updates when LSP or linter diagnostics arrive.
 - **On Mode Change**: Updates after you finish a visual/select mode selection.
 
 The automatic updates follow a priority order: **Diagnostics > Selection > File Metadata**. This ensures the agent always sees what is most relevant to your current cursor position and editor state.
 
-Codex, Claude, and Gemini can use hook mode after you install native hooks. Aider, Copilot, and
-Opencode use paste mode unless a verified native context-injection hook installer is added.
-
-Hook mode is backend-driven, not view-driven. It applies from float, panel, and source-window
-context commands when configured.
+Codex, Claude, and Gemini can use automatic hook updates after you install native hooks. Aider,
+Copilot, and Opencode use paste mode unless a verified native context-injection hook installer is
+added.
 
 ## Native Hook Installation
 
 Run `:AgentTermInstallHooks` after selecting a supported agent. Installation is explicit; normal
 `setup()` never writes agent hook files.
 
-The install command enables `agent.context.mode = "hook"` for the current Neovim session after it
-writes the hook files. To persist hook mode across restarts, install the hooks once and configure:
+The install command enables `context.hook.enabled = true` for the current Neovim session after it
+writes the hook files. To persist automatic hook updates across restarts, install hooks once and
+configure:
 
 ```lua
 require("agent_term").setup({
   agent = {
     preset = "codex", -- or "claude"
-    context = { mode = "hook" },
+  },
+  context = {
+    hook = { enabled = true },
   },
 })
 ```

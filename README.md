@@ -125,7 +125,7 @@ require("agent_term").setup({
 Presets are convenience defaults, not a guarantee of feature parity across tools. Exact commands and
 caveats are documented in [docs/backends.md](docs/backends.md).
 
-| Preset | Command | Context mode | Resume summary |
+| Preset | Command | Hook installer support | Resume summary |
 | --- | --- | --- | --- |
 | `codex` | `codex` | paste; native hook install supported | default, all, last |
 | `gemini` | `gemini` | paste; native hook install supported | default, last |
@@ -189,9 +189,12 @@ Context commands send lightweight editor metadata, not full buffer contents.
 - Selection context sends file path, filetype, and selected line range.
 - Diagnostics context sends compact diagnostics for the current buffer.
 
-### Automatic Updates (Hook Mode)
+### Automatic Updates (Hook Integration)
 
-When using [Hook mode](#hook-mode), context is automatically updated in the background on buffer switch, diagnostics change, or after leaving visual/select mode. It uses a priority system to ensure the most relevant context is always available:
+When automatic hook updates are enabled (`context.hook.enabled = true`), `agent-term.nvim` updates
+the hook context file in the background on buffer switch, diagnostics change, or after leaving
+visual/select mode. It uses a priority system to ensure the most relevant context is always
+available:
 
 1. **Diagnostics**: If the buffer has diagnostics, they are sent as the primary context.
 2. **Selection**: If no diagnostics are active but a selection exists, it is prioritized.
@@ -200,18 +203,20 @@ When using [Hook mode](#hook-mode), context is automatically updated in the back
 The plugin manages repo-level state in the `.agent-term/` directory by default.
 
 <p align="center">
-  <img src="docs/assets/context-retrieval-demo.gif" alt="agent-term.nvim hook mode context retrieval demo" width="900" />
+  <img src="docs/assets/context-retrieval-demo.gif" alt="agent-term.nvim automatic hook context retrieval demo" width="900" />
 </p>
 
-### Backend Modes
+### Context Transport
 
-**Paste mode** sends context to the running terminal job via simulated keystrokes.
+Manual context commands always paste context into the running terminal job.
 
-**Hook mode** writes the latest context payload to `context.file_path` (default: `.agent-term/context.json`) and relies on an installed native agent hook to read that file during the agent's prompt lifecycle. Run `:AgentTermInstallHooks` to install supported native hooks for the configured agent.
+Optional hook integration writes the latest context payload to `context.file_path` (default:
+`.agent-term/context.json`) for native agent hooks to consume during prompt lifecycle events. Run
+`:AgentTermInstallHooks` to install supported native hooks for the configured agent.
 
 Hook installation is explicit. Normal setup does not modify project or user agent config files.
-Codex, Claude, and Gemini support native hook installation. Aider, Copilot, and Opencode stay in paste mode
-unless you explicitly configure a verified native hook integration.
+Codex, Claude, and Gemini support native hook installation. Aider, Copilot, and Opencode stay
+paste-only unless you explicitly configure a verified native hook integration.
 
 If the agent is not running, context commands open the configured `context.target_view`. The default
 target reuses an open panel when one exists, otherwise it opens a float.
@@ -241,8 +246,7 @@ with `Panel`.
 - No selection context: reselect text or run `:'<,'>AgentTermSendSelectionContext`.
 - Resume command missing: the preset or custom config does not support that resume capability.
 - Resume refused: a session is already running; run `:AgentTermKill` first.
-- Context appears in the terminal: the backend is using paste mode. Install native hooks and enable
-  `agent.context.mode = "hook"` to use file-backed native hook context.
+- To enable automatic native hook updates, install hooks and set `context.hook.enabled = true`.
 
 ## Advanced Docs
 

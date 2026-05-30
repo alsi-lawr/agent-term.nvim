@@ -22,13 +22,13 @@ describe("Given configuration setup", function()
 		local opts = config.setup()
 
 		assert.are.same({ "codex" }, opts.agent.cmd)
-		assert.are.equal("paste", opts.agent.context.mode)
 		assert.are.same({ "codex", "resume" }, opts.agent.resume.default)
 		assert.are.same({ "codex", "resume", "--all" }, opts.agent.resume.all)
 		assert.are.same({ "codex", "resume", "--last" }, opts.agent.resume.last)
 		assert.are.equal("right", opts.panel.position)
 		assert.are.equal(".agent-term/context.json", opts.context.file_path)
 		assert.are.equal("default", opts.context.target_view)
+		assert.is_false(opts.context.hook.enabled)
 		assert.is_false(opts.keymaps)
 	end)
 
@@ -111,7 +111,6 @@ describe("Given configuration setup", function()
 		})
 
 		assert.are.same({ "claude" }, opts.agent.cmd)
-		assert.are.equal("paste", opts.agent.context.mode)
 		assert.are.same({ "claude", "--resume" }, opts.agent.resume.default)
 		assert.is_false(opts.agent.resume.all)
 		assert.are.same({ "claude", "--continue" }, opts.agent.resume.last)
@@ -132,7 +131,6 @@ describe("Given configuration setup", function()
 			})
 
 			assert.are.same({ "codex", "--model", "gpt-5.4-mini" }, opts.agent.cmd)
-			assert.are.equal("paste", opts.agent.context.mode)
 			assert.are.same({ "codex", "resume" }, opts.agent.resume.default)
 			assert.is_false(opts.agent.resume.all)
 			assert.are.same({ "codex", "resume", "--last" }, opts.agent.resume.last)
@@ -159,7 +157,6 @@ describe("Given configuration setup", function()
 		})
 
 		assert.are.same({ "copilot" }, opts.agent.cmd)
-		assert.are.equal("paste", opts.agent.context.mode)
 		assert.are.same({ "copilot", "--resume" }, opts.agent.resume.default)
 		assert.is_false(opts.agent.resume.all)
 		assert.are.same({ "copilot", "--continue" }, opts.agent.resume.last)
@@ -175,7 +172,6 @@ describe("Given configuration setup", function()
 		})
 
 		assert.are.same({ "opencode" }, opts.agent.cmd)
-		assert.are.equal("paste", opts.agent.context.mode)
 		assert.is_false(opts.agent.resume.default)
 		assert.is_false(opts.agent.resume.all)
 		assert.are.same({ "opencode", "--continue" }, opts.agent.resume.last)
@@ -194,33 +190,32 @@ describe("Given configuration setup", function()
 
 		assert.are.same({ "gemini" }, opts.agent.cmd)
 		assert.is_false(opts.agent.resume)
-		assert.are.equal("paste", opts.agent.context.mode)
 		assert.is_false(config.has_resume("default"))
 	end)
 
-	it(
-		"When custom agent opts explicitly configure context and resume Then they are preserved",
-		function()
-			local config = require("agent_term.setup.runtime_config")
-			local opts = config.setup({
-				agent = {
-					cmd = { "custom-agent" },
-					context = {
-						mode = "hook",
-					},
-					resume = {
-						default = { "custom-agent", "resume" },
-					},
+	it("When unknown agent config keys are provided Then they are ignored", function()
+		local config = require("agent_term.setup.runtime_config")
+		local opts = config.setup({
+			agent = {
+				cmd = { "custom-agent" },
+				transport = "hook",
+				resume = {
+					default = { "custom-agent", "resume" },
 				},
-			})
+			},
+		})
 
-			assert.are.same({ "custom-agent" }, opts.agent.cmd)
-			assert.are.equal("hook", opts.agent.context.mode)
-			assert.are.same({ "custom-agent", "resume" }, opts.agent.resume.default)
-			assert.is_false(opts.agent.resume.all)
-			assert.is_false(opts.agent.resume.last)
-		end
-	)
+		assert.are.same({ "custom-agent" }, opts.agent.cmd)
+		assert.is_false(opts.context.hook.enabled)
+		assert.are.same({ "custom-agent", "resume" }, opts.agent.resume.default)
+		assert.is_false(opts.agent.resume.all)
+		assert.is_false(opts.agent.resume.last)
+		assert.are.equal(1, #notifications)
+		assert.match(
+			"Unknown agent%-term%.nvim config keys ignored in `agent`: transport",
+			notifications[1].msg
+		)
+	end)
 
 	it("When an unknown preset is used Then a warning is shown and defaults are kept", function()
 		local config = require("agent_term.setup.runtime_config")
@@ -313,7 +308,6 @@ describe("Given configuration setup", function()
 
 		assert.are.same({ "codex" }, opts.agent.cmd)
 		assert.are.same({ "codex", "resume" }, opts.agent.resume.default)
-		assert.are.equal("paste", opts.agent.context.mode)
 		assert.are.equal(".agent-term/context.json", opts.context.file_path)
 		assert.are.equal(0.85, opts.float.width)
 		assert.are.equal("right", opts.panel.position)

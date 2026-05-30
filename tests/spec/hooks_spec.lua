@@ -50,7 +50,7 @@ describe("Given native agent hook installation", function()
 		assert.are.equal("command", handler.type)
 		assert.is_not_nil(handler.command:match("%.codex/hooks/agent_term_context%.py"))
 		assert.is_not_nil(handler.command:match("%$PWD/.agent%-term/context%.json"))
-		assert.are.equal("hook", require("agent_term.setup.runtime_config").options.agent.context.mode)
+		assert.is_true(require("agent_term.setup.runtime_config").options.context.hook.enabled)
 		assert.are.equal(1, vim.fn.filereadable(path(".codex/hooks/agent_term_context.py")))
 	end)
 

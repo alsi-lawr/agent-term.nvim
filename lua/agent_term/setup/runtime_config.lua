@@ -22,15 +22,11 @@ local M = {}
 ---@field preset? agent_term.SupportedAgent
 ---@field cmd? string[]
 ---@field resume? false|agent_term.ResumeConfig
----@field context? agent_term.AgentContextConfig
 
 ---@class agent_term.ResumeConfig
 ---@field default? string[]|false
 ---@field all? string[]|false
 ---@field last? string[]|false
-
----@class agent_term.AgentContextConfig
----@field mode? "paste"|"hook"
 
 ---@class agent_term.FloatConfig
 ---@field width? number
@@ -45,11 +41,15 @@ local M = {}
 ---@class agent_term.ContextConfig
 ---@field file_path? string
 ---@field target_view? "default"|"float"|"panel"
+---@field hook? agent_term.ContextHookConfig
 ---@field include_file_path? boolean
 ---@field include_filetype? boolean
 ---@field include_cursor? boolean
 ---@field include_selection_range? boolean
 ---@field include_diagnostics? boolean
+
+---@class agent_term.ContextHookConfig
+---@field enabled? boolean
 
 M.options = setup_config.build_options()
 
