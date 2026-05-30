@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    env:
+      NVIM_VERSION: v0.12.0
+      PLENARY_REF: v0.1.4
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Neovim
+        run: |
+          curl -fsSL -o /tmp/nvim-linux-x86_64.tar.gz "https://github.com/neovim/neovim/releases/download/${NVIM_VERSION}/nvim-linux-x86_64.tar.gz"
+          tar -C /tmp -xzf /tmp/nvim-linux-x86_64.tar.gz
+          echo "/tmp/nvim-linux-x86_64/bin" >> "$GITHUB_PATH"
+
+      - name: Checkout plenary.nvim
+        uses: actions/checkout@v4
+        with:
+          repository: nvim-lua/plenary.nvim
+          ref: ${{ env.PLENARY_REF }}
+          path: .deps/plenary.nvim
+
+      - name: Run tests
+        env:
+          PLENARY_PATH: ${{ github.workspace }}/.deps/plenary.nvim
+        run: bash ./run_tests.sh
