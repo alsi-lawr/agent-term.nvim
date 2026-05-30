@@ -1,6 +1,6 @@
 local reload = require("tests.helpers.reload")
 
-describe("Given Codex UI views", function()
+describe("Given Agent Term UI views", function()
 	local state
 	local config
 	local float
@@ -19,12 +19,12 @@ describe("Given Codex UI views", function()
 	end
 
 	before_each(function()
-		reload.clear_codex_modules()
-		config = require("codex.config")
+		reload.clear_agent_term_modules()
+		config = require("agent_term.config")
 		config.setup()
-		state = require("codex.runtime.state")
-		float = require("codex.ui.float")
-		panel = require("codex.ui.panel")
+		state = require("agent_term.runtime.state")
+		float = require("agent_term.ui.float")
+		panel = require("agent_term.ui.panel")
 	end)
 
 	after_each(function()
@@ -39,7 +39,7 @@ describe("Given Codex UI views", function()
 			end
 		end
 		bufs_to_delete = {}
-		reload.clear_codex_modules()
+		reload.clear_agent_term_modules()
 	end)
 
 	it(

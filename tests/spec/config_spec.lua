@@ -14,25 +14,29 @@ describe("Given configuration setup", function()
 
 	after_each(function()
 		vim.notify = original_notify
-		reload.clear_codex_modules()
+		reload.clear_agent_term_modules()
 	end)
 
 	it("When setup is called with no user options Then defaults are exposed unchanged", function()
-		local config = require("codex.config")
+		local config = require("agent_term.config")
 		local opts = config.setup()
 
-		assert.are.same({ "codex" }, opts.codex.cmd)
+		assert.are.same({ "codex" }, opts.agent.cmd)
+		assert.are.same({ "codex", "resume" }, opts.agent.resume.default)
+		assert.are.same({ "codex", "resume", "--all" }, opts.agent.resume.all)
+		assert.are.same({ "codex", "resume", "--last" }, opts.agent.resume.last)
 		assert.are.equal("right", opts.panel.position)
 		assert.are.equal("default", opts.context.target_view)
 		assert.is_false(opts.keymaps)
 	end)
 
 	it("When unknown config keys are provided Then they are stripped and users are warned", function()
-		local config = require("codex.config")
+		local config = require("agent_term.config")
 		local opts = config.setup({
-			codex = {
-				cmd = { "codex", "--unsafe-shape" },
+			agent = {
+				cmd = { "gemini" },
 				bogus_cmd_key = true,
+				resume = false,
 			},
 			panel = {
 				position = "bottom",
@@ -44,24 +48,46 @@ describe("Given configuration setup", function()
 			experimental = { flag = true },
 		})
 
-		assert.are.same({ "codex", "--unsafe-shape" }, opts.codex.cmd)
+		assert.are.same({ "gemini" }, opts.agent.cmd)
+		assert.is_false(opts.agent.resume)
 		assert.are.equal("bottom", opts.panel.position)
 		assert.are.equal("default", opts.context.target_view)
 		assert.is_false(opts.context.include_cursor)
-		assert.is_nil(opts.codex.bogus_cmd_key)
+		assert.is_nil(opts.agent.bogus_cmd_key)
 		assert.is_nil(opts.experimental)
 		assert.are.equal(2, #notifications)
-		assert.match("Unknown codex.nvim config keys ignored: experimental", notifications[1].msg)
-		assert.match(
-			"Unknown codex.nvim config keys ignored in `codex`: bogus_cmd_key",
+		assert.are.equal(
+			"Unknown agent-term.nvim config keys ignored: experimental",
+			notifications[1].msg
+		)
+		assert.are.equal(
+			"Unknown agent-term.nvim config keys ignored in `agent`: bogus_cmd_key",
 			notifications[2].msg
 		)
 		assert.are.equal(vim.log.levels.WARN, notifications[1].level)
 		assert.are.equal(vim.log.levels.WARN, notifications[2].level)
 	end)
 
+	it("When partial resume support is configured Then unavailable capabilities are false", function()
+		local config = require("agent_term.config")
+		local opts = config.setup({
+			agent = {
+				cmd = { "some-agent" },
+				resume = {
+					default = { "some-agent", "resume" },
+					all = false,
+					last = false,
+				},
+			},
+		})
+
+		assert.are.same({ "some-agent", "resume" }, opts.agent.resume.default)
+		assert.is_false(config.has_resume("all"))
+		assert.is_false(config.has_resume("last"))
+	end)
+
 	it("When unknown keymaps are configured Then they are stripped and warned", function()
-		local config = require("codex.config")
+		local config = require("agent_term.config")
 		local opts = config.setup({
 			keymaps = {
 				float_toggle = "<leader>ct",
@@ -72,12 +98,15 @@ describe("Given configuration setup", function()
 		assert.are.equal("<leader>ct", opts.keymaps.float_toggle)
 		assert.is_nil(opts.keymaps.unknown_action)
 		assert.are.equal(1, #notifications)
-		assert.match("Unknown codex.nvim keymaps ignored: unknown_action", notifications[1].msg)
+		assert.are.equal(
+			"Unknown agent-term.nvim keymaps ignored: unknown_action",
+			notifications[1].msg
+		)
 		assert.are.equal(vim.log.levels.WARN, notifications[1].level)
 	end)
 
 	it("When keymaps is explicitly disabled Then setup preserves keymaps = false", function()
-		local config = require("codex.config")
+		local config = require("agent_term.config")
 		local opts = config.setup({
 			keymaps = false,
 		})
@@ -89,7 +118,7 @@ describe("Given configuration setup", function()
 	it(
 		"When only part of a nested table is overridden Then defaults remain for unspecified keys",
 		function()
-			local config = require("codex.config")
+			local config = require("agent_term.config")
 			local opts = config.setup({
 				context = {
 					include_file_path = false,

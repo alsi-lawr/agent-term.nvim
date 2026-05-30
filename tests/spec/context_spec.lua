@@ -5,7 +5,7 @@ describe("Given context message builders", function()
 	local bufnr
 
 	before_each(function()
-		reload.clear_codex_modules()
+		reload.clear_agent_term_modules()
 		bufnr = vim.api.nvim_create_buf(true, false)
 		vim.api.nvim_set_current_buf(bufnr)
 	end)
@@ -14,11 +14,11 @@ describe("Given context message builders", function()
 		if bufnr and vim.api.nvim_buf_is_valid(bufnr) then
 			pcall(vim.api.nvim_buf_delete, bufnr, { force = true })
 		end
-		reload.clear_codex_modules()
+		reload.clear_agent_term_modules()
 	end)
 
 	it("When building buffer context Then ambient metadata and visible range are included", function()
-		local config = require("codex.config")
+		local config = require("agent_term.config")
 		config.setup({
 			context = {
 				include_file_path = true,
@@ -32,7 +32,7 @@ describe("Given context message builders", function()
 		vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, { "one", "two", "three", "four" })
 		vim.api.nvim_win_set_cursor(0, { 2, 1 })
 
-		local context = require("codex.context.builder")
+		local context = require("agent_term.context.builder")
 		local message = context.buffer_message()
 
 		assert.is_not_nil(message:match("type: buffer"))
@@ -46,7 +46,7 @@ describe("Given context message builders", function()
 	it(
 		"When selection context is invoked with a command range Then the explicit range wins",
 		function()
-			local config = require("codex.config")
+			local config = require("agent_term.config")
 			config.setup({
 				context = {
 					include_file_path = false,
@@ -55,7 +55,7 @@ describe("Given context message builders", function()
 				},
 			})
 
-			local context = require("codex.context.builder")
+			local context = require("agent_term.context.builder")
 			local message = context.selection_message({ range = 2, line1 = 9, line2 = 3 })
 
 			assert.is_not_nil(message)
@@ -69,10 +69,10 @@ describe("Given context message builders", function()
 	it(
 		"When selection context has no command range Then visual marks are used, else a clear error is returned",
 		function()
-			local config = require("codex.config")
+			local config = require("agent_term.config")
 			config.setup()
 
-			local context = require("codex.context.builder")
+			local context = require("agent_term.context.builder")
 			vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, {
 				"a",
 				"b",
@@ -103,7 +103,7 @@ describe("Given context message builders", function()
 	it(
 		"When diagnostics exist Then diagnostics context includes formatted diagnostics from current buffer",
 		function()
-			local config = require("codex.config")
+			local config = require("agent_term.config")
 			config.setup({
 				context = {
 					include_file_path = false,
@@ -112,7 +112,7 @@ describe("Given context message builders", function()
 				},
 			})
 
-			local ns = vim.api.nvim_create_namespace("codex-tests-context-diag")
+			local ns = vim.api.nvim_create_namespace("agent_term-tests-context-diag")
 			vim.diagnostic.set(ns, bufnr, {
 				{
 					lnum = 2,
@@ -130,7 +130,7 @@ describe("Given context message builders", function()
 				},
 			})
 
-			local context = require("codex.context.builder")
+			local context = require("agent_term.context.builder")
 
 			local message = context.diagnostics_message()
 			assert.is_not_nil(message)
@@ -143,9 +143,9 @@ describe("Given context message builders", function()
 	it(
 		"When no diagnostics are present Then diagnostics context returns a practical no-op error",
 		function()
-			local config = require("codex.config")
+			local config = require("agent_term.config")
 			config.setup()
-			local context = require("codex.context.builder")
+			local context = require("agent_term.context.builder")
 
 			local message, err = context.diagnostics_message()
 			assert.is_nil(message)

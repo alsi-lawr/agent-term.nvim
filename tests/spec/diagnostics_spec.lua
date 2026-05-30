@@ -4,7 +4,7 @@ describe("Given diagnostics formatting", function()
 	local bufnr
 
 	before_each(function()
-		reload.clear_codex_modules()
+		reload.clear_agent_term_modules()
 		bufnr = vim.api.nvim_create_buf(true, false)
 		vim.api.nvim_set_current_buf(bufnr)
 	end)
@@ -13,13 +13,13 @@ describe("Given diagnostics formatting", function()
 		if bufnr and vim.api.nvim_buf_is_valid(bufnr) then
 			pcall(vim.api.nvim_buf_delete, bufnr, { force = true })
 		end
-		reload.clear_codex_modules()
+		reload.clear_agent_term_modules()
 	end)
 
 	it(
 		"When diagnostics are formatted Then line and column become 1-based with readable fields",
 		function()
-			local ns = vim.api.nvim_create_namespace("codex-tests-diagnostics")
+			local ns = vim.api.nvim_create_namespace("agent_term-tests-diagnostics")
 			vim.diagnostic.set(ns, bufnr, {
 				{
 					lnum = 1,
@@ -37,7 +37,7 @@ describe("Given diagnostics formatting", function()
 				},
 			})
 
-			local diagnostics = require("codex.context.diagnostics")
+			local diagnostics = require("agent_term.context.diagnostics")
 			local out = diagnostics.format_for_buffer(bufnr)
 
 			assert.are.same({

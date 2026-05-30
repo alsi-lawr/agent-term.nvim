@@ -2,11 +2,11 @@ local reload = require("tests.helpers.reload")
 
 describe("Given keymap name helpers", function()
 	after_each(function()
-		reload.clear_codex_modules()
+		reload.clear_agent_term_modules()
 	end)
 
 	it("When checking known names Then is_known returns true only for supported keymaps", function()
-		local keymaps = require("codex.keymaps")
+		local keymaps = require("agent_term.keymaps")
 
 		assert.is_true(keymaps.is_known("float_toggle"))
 		assert.is_true(keymaps.is_known("send_selection_context"))
@@ -14,7 +14,7 @@ describe("Given keymap name helpers", function()
 	end)
 
 	it("When listing unknown names Then only unsupported keymaps are returned", function()
-		local keymaps = require("codex.keymaps")
+		local keymaps = require("agent_term.keymaps")
 		local unknown = keymaps.get_unknown_names({
 			float_toggle = "<leader>ct",
 			unknown_z = "<leader>z",

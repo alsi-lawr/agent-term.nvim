@@ -2,11 +2,11 @@ local reload = require("tests.helpers.reload")
 
 describe("Given setup schema helpers", function()
 	after_each(function()
-		reload.clear_codex_modules()
+		reload.clear_agent_term_modules()
 	end)
 
 	it("When collecting unknown names Then only keys rejected by the checker are returned", function()
-		local schema = require("codex.setup.schema")
+		local schema = require("agent_term.setup.schema")
 		local unknown = schema.get_unknown_names({
 			a = 1,
 			b = 2,
@@ -19,7 +19,7 @@ describe("Given setup schema helpers", function()
 	end)
 
 	it("When stripping unknown names Then those keys are removed from the table", function()
-		local schema = require("codex.setup.schema")
+		local schema = require("agent_term.setup.schema")
 		local input = { keep = 1, drop_a = true, drop_b = true }
 
 		schema.strip_unknown_names(input, { "drop_a", "drop_b" })

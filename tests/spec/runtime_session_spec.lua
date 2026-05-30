@@ -1,6 +1,6 @@
 local reload = require("tests.helpers.reload")
 
-describe("Given Codex runtime session management", function()
+describe("Given Agent Term runtime session management", function()
 	local config
 	local state
 	local session
@@ -31,9 +31,9 @@ describe("Given Codex runtime session management", function()
 	end
 
 	before_each(function()
-		reload.clear_codex_modules()
+		reload.clear_agent_term_modules()
 		notifications = {}
-		package.loaded["codex.notify"] = {
+		package.loaded["agent_term.notify"] = {
 			info = function(msg)
 				notifications[#notifications + 1] = { level = "info", msg = msg }
 			end,
@@ -45,17 +45,19 @@ describe("Given Codex runtime session management", function()
 			end,
 		}
 
-		config = require("codex.config")
+		config = require("agent_term.config")
 		config.setup({
-			codex = {
+			agent = {
 				cmd = { "codex" },
-				resume = { "codex", "resume" },
-				resume_all = { "codex", "resume", "--all" },
-				resume_last = { "codex", "resume", "--last" },
+				resume = {
+					default = { "codex", "resume" },
+					all = { "codex", "resume", "--all" },
+					last = { "codex", "resume", "--last" },
+				},
 			},
 		})
-		state = require("codex.runtime.state")
-		session = require("codex.runtime.session")
+		state = require("agent_term.runtime.state")
+		session = require("agent_term.runtime.session")
 	end)
 
 	after_each(function()
@@ -66,24 +68,24 @@ describe("Given Codex runtime session management", function()
 		vim.api.nvim_chan_send = original_chan_send
 
 		reset_runtime_state()
-		reload.clear_codex_modules()
+		reload.clear_agent_term_modules()
 	end)
 
 	it(
-		"When the configured Codex executable is missing Then session start fails with a user-visible error",
+		"When the configured Agent Term executable is missing Then session start fails with a user-visible error",
 		function()
 			vim.fn.executable = function(_)
 				return 0
 			end
 
-			local buf = session.ensure_session({ "missing-codex" })
+			local buf = session.ensure_session({ "missing-agent" })
 
 			assert.is_nil(buf)
 			assert.is_nil(state.buf)
 			assert.is_nil(state.job_id)
 			assert.are.equal(1, #notifications)
 			assert.are.equal("error", notifications[1].level)
-			assert.match("Codex command not found: missing%-codex", notifications[1].msg)
+			assert.match("Agent command not found: missing%-agent", notifications[1].msg)
 		end
 	)
 
@@ -101,7 +103,7 @@ describe("Given Codex runtime session management", function()
 		assert.is_nil(state.buf)
 		assert.is_nil(state.job_id)
 		assert.are.equal("error", notifications[#notifications].level)
-		assert.match("Failed to start Codex command: codex", notifications[#notifications].msg)
+		assert.match("Failed to start agent command: codex", notifications[#notifications].msg)
 	end)
 
 	it(
@@ -149,28 +151,70 @@ describe("Given Codex runtime session management", function()
 		end
 	)
 
+	it(
+		"When configured for Gemini Then the interactive command starts without resume support",
+		function()
+			local started_cmd
+			config.setup({
+				agent = {
+					cmd = { "gemini" },
+					resume = false,
+				},
+			})
+			vim.fn.executable = function(_)
+				return 1
+			end
+			vim.fn.jobstart = function(cmd, _)
+				started_cmd = cmd
+				return 88
+			end
+			vim.fn.jobwait = function(ids, _)
+				return { ids[1] == 88 and -1 or 0 }
+			end
+
+			local buf = session.ensure_session()
+
+			assert.is_true(vim.api.nvim_buf_is_valid(buf))
+			assert.are.same({ "gemini" }, started_cmd)
+			assert.is_false(config.has_resume("default"))
+		end
+	)
+
 	it("When resuming while already running Then it refuses and asks user to kill first", function()
 		state.job_id = 55
 		vim.fn.jobwait = function(ids, _)
 			return { ids[1] == 55 and -1 or 0 }
 		end
 
-		local buf = session.start_resume("resume_all")
+		local buf = session.start_resume("all")
 
 		assert.is_nil(buf)
 		assert.are.equal("warn", notifications[#notifications].level)
-		assert.match("Run :CodexKill first", notifications[#notifications].msg)
+		assert.match("Run :AgentTermKill first", notifications[#notifications].msg)
 	end)
 
-	it("When resume kind is unknown Then it returns nil and reports a clear error", function()
-		vim.fn.jobwait = function(_, _)
-			return { 0 }
+	it(
+		"When a resume capability is disabled Then it returns nil and reports a clear error",
+		function()
+			vim.fn.jobwait = function(_, _)
+				return { 0 }
+			end
+			config.setup({
+				agent = {
+					cmd = { "some-agent" },
+					resume = {
+						default = { "some-agent", "resume" },
+						all = false,
+						last = false,
+					},
+				},
+			})
+
+			local buf = session.start_resume("all")
+
+			assert.is_nil(buf)
+			assert.are.equal("error", notifications[#notifications].level)
+			assert.match("Resume capability is not configured: all", notifications[#notifications].msg)
 		end
-
-		local buf = session.start_resume("not-a-real-kind")
-
-		assert.is_nil(buf)
-		assert.are.equal("error", notifications[#notifications].level)
-		assert.match("Unknown resume command kind", notifications[#notifications].msg)
-	end)
+	)
 end)
