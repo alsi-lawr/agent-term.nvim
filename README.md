@@ -43,6 +43,19 @@
 The default backend is Codex, but the plugin is backend-agnostic. Presets are best-effort defaults
 for common terminal agents; any compatible interactive command can be configured directly.
 
+## Why agent-term.nvim?
+
+Most Neovim AI plugins abstract agents behind a shared chat UI. `agent-term.nvim` takes the
+opposite approach: it keeps each agent's real terminal interface inside Neovim.
+
+That means Codex, Claude, Gemini, Aider, Copilot, OpenCode, and other terminal agents keep their
+own slash commands, menus, model switching, permission flows, hooks, highlighting/autocomplete,
+and session behavior when supported by the agent TUI.
+
+The plugin adds a Neovim bridge around that native UI: one persistent terminal session, float/panel
+views, editor context capture, diagnostics/selection/buffer metadata, keymaps, resume/kill helpers,
+and optional native hook installation.
+
 ## Requirements
 
 - Neovim 0.12+
