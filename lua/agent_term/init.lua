@@ -73,6 +73,7 @@ end
 function M.setup(opts)
 	config.setup(opts)
 	captured_context.setup_tracking()
+	hooks.setup_autocmds()
 	commands.setup(M)
 	keymaps.setup(M)
 end

@@ -13,11 +13,11 @@ def main() -> int:
         return 0
 
     try:
-        payload = json.loads(context_path.read_text(encoding="utf-8"))
+        context_record = json.loads(context_path.read_text(encoding="utf-8"))
     except Exception:
         return 0
 
-    content = payload.get("content")
+    content = context_record.get("content")
     if not isinstance(content, str) or content == "":
         return 0
 

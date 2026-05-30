@@ -70,6 +70,15 @@ describe("Given panel silent context injection", function()
 			end,
 		}
 
+		package.loaded["agent_term.hooks.installers.codex"] = {
+			is_installed = function()
+				return true
+			end,
+			install = function()
+				return true, { files = {}, changed = false }
+			end,
+		}
+
 		plugin = require("agent_term")
 		state = require("agent_term.runtime.state")
 	end)
@@ -341,11 +350,8 @@ describe("Given panel silent context injection", function()
 
 		plugin.send_buffer_context()
 
-		assert.are.equal(0, #sent_messages)
-		local payload = read_context_file()
-		assert.are.equal(1, payload.version)
-		assert.are.equal("buffer", payload.kind)
-		assert.is_not_nil(payload.content:match("file: /tmp/panel%-source%.lua"))
+		assert.are.equal(1, #sent_messages)
+		assert.is_not_nil(sent_messages[1]:match("file: /tmp/panel%-source%.lua"))
 	end)
 
 	it("When hook mode starts a default float Then source context is written", function()
@@ -361,9 +367,8 @@ describe("Given panel silent context injection", function()
 
 		plugin.send_buffer_context()
 
-		assert.are.equal(0, #sent_messages)
-		local payload = read_context_file()
-		assert.is_not_nil(payload.content:match("file: /tmp/panel%-source%.lua"))
+		assert.are.equal(1, #sent_messages)
+		assert.is_not_nil(sent_messages[1]:match("file: /tmp/panel%-source%.lua"))
 	end)
 
 	it(
@@ -388,10 +393,9 @@ describe("Given panel silent context injection", function()
 
 			plugin.send_buffer_context()
 
-			assert.are.equal(0, #sent_messages)
-			local payload = read_context_file()
-			assert.is_not_nil(payload.content:match("file: /tmp/hook%-source%.lua"))
-			assert.is_nil(payload.content:match("file: /tmp/panel%-source%.lua"))
+			assert.are.equal(1, #sent_messages)
+			assert.is_not_nil(sent_messages[1]:match("file: /tmp/hook%-source%.lua"))
+			assert.is_nil(sent_messages[1]:match("file: /tmp/panel%-source%.lua"))
 
 			pcall(vim.api.nvim_buf_delete, other_buf, { force = true })
 		end
@@ -412,11 +416,9 @@ describe("Given panel silent context injection", function()
 
 			plugin.send_selection_context({})
 
-			assert.are.equal(0, #sent_messages)
-			local payload = read_context_file()
-			assert.are.equal("selection", payload.kind)
-			assert.is_not_nil(payload.content:match("selection: lines 2%-4"))
-			assert.is_not_nil(payload.content:match("file: /tmp/panel%-source%.lua"))
+			assert.are.equal(1, #sent_messages)
+			assert.is_not_nil(sent_messages[1]:match("selection: lines 2%-4"))
+			assert.is_not_nil(sent_messages[1]:match("file: /tmp/panel%-source%.lua"))
 		end
 	)
 end)

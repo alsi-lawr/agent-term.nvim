@@ -1,11 +1,13 @@
 local config = require("agent_term.setup.runtime_config")
 local notify = require("agent_term.notify")
+local autocmds = require("agent_term.hooks.autocmds")
 
 local M = {}
 
 local installers = {
 	codex = require("agent_term.hooks.installers.codex"),
 	claude = require("agent_term.hooks.installers.claude"),
+	gemini = require("agent_term.hooks.installers.gemini"),
 }
 
 local function command_name()
@@ -48,10 +50,58 @@ function M.install()
 	config.options.agent.context = config.options.agent.context or {}
 	config.options.agent.context.mode = "hook"
 
-	notify.info(
-		("Installed native %s hooks. Wrote: %s"):format(agent_name, table.concat(result.files, ", "))
-	)
+	local msg
+	if result.changed then
+		msg = ("Installed native %s hooks. Files: %s"):format(
+			agent_name,
+			table.concat(result.files, ", ")
+		)
+	else
+		msg = ("Native %s hooks already installed. Files unchanged: %s"):format(
+			agent_name,
+			table.concat(result.files, ", ")
+		)
+	end
+	notify.info(msg)
 	return true
+end
+
+function M.detect()
+	local agent_name = command_name()
+	local installer = agent_name and installers[agent_name] or nil
+	local current_mode = config.options.agent.context and config.options.agent.context.mode
+
+	-- Only perform safety check/fallback if the user has opted-in to 'hook' mode
+	if current_mode ~= "hook" then
+		return false
+	end
+
+	-- If we don't know how to check this agent, assume it's a custom setup and leave it alone
+	if not installer or type(installer.is_installed) ~= "function" then
+		return false
+	end
+
+	if
+		not installer.is_installed({
+			context_file_path = context_file_path(),
+		})
+	then
+		-- Fallback to paste mode if hooks are not actually installed on disk
+		config.options.agent.context.mode = "paste"
+		notify.warn(
+			("Hook mode enabled for `%s` but native hooks were not found. Falling back to paste mode. Run :AgentTermInstallHooks to install."):format(
+				agent_name
+			)
+		)
+		return true
+	end
+
+	return false
+end
+
+function M.setup_autocmds()
+	M.detect()
+	autocmds.setup()
 end
 
 return M

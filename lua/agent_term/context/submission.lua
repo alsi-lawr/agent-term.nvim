@@ -15,17 +15,18 @@ end
 
 ---@param message string
 ---@param kind "buffer"|"selection"|"diagnostics"
+---@param force_paste? boolean
 ---@return boolean ok, boolean used_hook, string? hook_failure
-function M.submit(message, kind)
-	if backend_context_mode() == BACKEND_CONTEXT_MODE_HOOK then
-		local ok, err = context_file.write(kind, message)
-		if not ok then
-			return false, true, err
-		end
-		return true, true, nil
+function M.submit(message, kind, force_paste)
+	if force_paste or backend_context_mode() ~= BACKEND_CONTEXT_MODE_HOOK then
+		return terminal.send(message), false, nil
 	end
 
-	return terminal.send(message), false, nil
+	local ok, err = context_file.write(kind, message)
+	if not ok then
+		return false, true, err
+	end
+	return true, true, nil
 end
 
 return M
