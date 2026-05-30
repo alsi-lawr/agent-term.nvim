@@ -15,7 +15,7 @@ function M.get_unknown_names(maps)
 end
 
 function M.setup(api)
-	local config = require("agent_term.config")
+	local config = require("agent_term.setup.runtime_config")
 	local maps = config.options.keymaps or {}
 
 	for _, applied in ipairs(applied_maps) do

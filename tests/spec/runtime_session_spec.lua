@@ -45,7 +45,7 @@ describe("Given Agent Term runtime session management", function()
 			end,
 		}
 
-		config = require("agent_term.config")
+		config = require("agent_term.setup.runtime_config")
 		config.setup({
 			agent = {
 				cmd = { "codex" },

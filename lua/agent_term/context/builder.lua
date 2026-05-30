@@ -1,4 +1,4 @@
-local config = require("agent_term.config")
+local config = require("agent_term.setup.runtime_config")
 local diagnostics = require("agent_term.context.diagnostics")
 
 local M = {}

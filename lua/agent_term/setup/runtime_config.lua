@@ -15,16 +15,23 @@ local M = {}
 ---| "gemini"
 ---| "claude"
 ---| "aider"
+---| "copilot"
+---| "opencode"
 
 ---@class agent_term.AgentConfig
 ---@field preset? agent_term.SupportedAgent
 ---@field cmd? string[]
 ---@field resume? false|agent_term.ResumeConfig
+---@field context? agent_term.AgentContextConfig
 
 ---@class agent_term.ResumeConfig
 ---@field default? string[]|false
 ---@field all? string[]|false
 ---@field last? string[]|false
+
+---@class agent_term.AgentContextConfig
+---@field mode? "paste"|"hook"
+---@field hook_event? string
 
 ---@class agent_term.FloatConfig
 ---@field width? number

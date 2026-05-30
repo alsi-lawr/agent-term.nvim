@@ -20,7 +20,7 @@ describe("Given Agent Term UI views", function()
 
 	before_each(function()
 		reload.clear_agent_term_modules()
-		config = require("agent_term.config")
+		config = require("agent_term.setup.runtime_config")
 		config.setup()
 		state = require("agent_term.runtime.state")
 		float = require("agent_term.ui.float")

@@ -42,8 +42,8 @@ describe("Given Agent Term command registration", function()
 	end)
 
 	it("When the default backend is used Then resume commands are registered", function()
-		local config = require("agent_term.config")
-		local commands = require("agent_term.commands")
+		local config = require("agent_term.setup.runtime_config")
+		local commands = require("agent_term.setup.commands")
 		config.setup()
 		commands.setup(api())
 
@@ -53,8 +53,8 @@ describe("Given Agent Term command registration", function()
 	end)
 
 	it("When resume is disabled Then resume commands are not registered", function()
-		local config = require("agent_term.config")
-		local commands = require("agent_term.commands")
+		local config = require("agent_term.setup.runtime_config")
+		local commands = require("agent_term.setup.commands")
 		config.setup({
 			agent = {
 				cmd = { "gemini" },
@@ -69,8 +69,8 @@ describe("Given Agent Term command registration", function()
 	end)
 
 	it("When resume support is partial Then only configured capabilities are registered", function()
-		local config = require("agent_term.config")
-		local commands = require("agent_term.commands")
+		local config = require("agent_term.setup.runtime_config")
+		local commands = require("agent_term.setup.commands")
 		config.setup({
 			agent = {
 				cmd = { "some-agent" },

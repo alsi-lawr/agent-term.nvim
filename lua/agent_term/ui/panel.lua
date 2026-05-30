@@ -1,4 +1,4 @@
-local config = require("agent_term.config")
+local config = require("agent_term.setup.runtime_config")
 local enums = require("agent_term.enums")
 local state = require("agent_term.runtime.state")
 

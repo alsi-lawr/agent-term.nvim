@@ -22,6 +22,8 @@ M.agent = {
 	GEMINI = "gemini",
 	CLAUDE = "claude",
 	AIDER = "aider",
+	COPILOT = "copilot",
+	OPENCODE = "opencode",
 }
 
 return M

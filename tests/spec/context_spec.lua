@@ -18,7 +18,7 @@ describe("Given context message builders", function()
 	end)
 
 	it("When building buffer context Then ambient metadata and visible range are included", function()
-		local config = require("agent_term.config")
+		local config = require("agent_term.setup.runtime_config")
 		config.setup({
 			context = {
 				include_file_path = true,
@@ -46,7 +46,7 @@ describe("Given context message builders", function()
 	it(
 		"When selection context is invoked with a command range Then the explicit range wins",
 		function()
-			local config = require("agent_term.config")
+			local config = require("agent_term.setup.runtime_config")
 			config.setup({
 				context = {
 					include_file_path = false,
@@ -69,7 +69,7 @@ describe("Given context message builders", function()
 	it(
 		"When selection context has no command range Then visual marks are used, else a clear error is returned",
 		function()
-			local config = require("agent_term.config")
+			local config = require("agent_term.setup.runtime_config")
 			config.setup()
 
 			local context = require("agent_term.context.builder")
@@ -103,7 +103,7 @@ describe("Given context message builders", function()
 	it(
 		"When diagnostics exist Then diagnostics context includes formatted diagnostics from current buffer",
 		function()
-			local config = require("agent_term.config")
+			local config = require("agent_term.setup.runtime_config")
 			config.setup({
 				context = {
 					include_file_path = false,
@@ -143,7 +143,7 @@ describe("Given context message builders", function()
 	it(
 		"When no diagnostics are present Then diagnostics context returns a practical no-op error",
 		function()
-			local config = require("agent_term.config")
+			local config = require("agent_term.setup.runtime_config")
 			config.setup()
 			local context = require("agent_term.context.builder")
 

@@ -3,6 +3,7 @@ local M = {
 	job_id = nil,
 	float_win = nil,
 	panel_win = nil,
+	last_captured_context = nil,
 }
 
 function M.has_valid_buf()
@@ -20,8 +21,9 @@ function M.has_valid_float_win()
 	return M.float_win and vim.api.nvim_win_is_valid(M.float_win)
 end
 
+---@return boolean
 function M.has_valid_panel_win()
-	return M.panel_win and vim.api.nvim_win_is_valid(M.panel_win)
+	return M.panel_win ~= nil and vim.api.nvim_win_is_valid(M.panel_win)
 end
 
 function M.reset_terminal()

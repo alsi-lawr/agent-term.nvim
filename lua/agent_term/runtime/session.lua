@@ -1,4 +1,4 @@
-local config = require("agent_term.config")
+local config = require("agent_term.setup.runtime_config")
 local notify = require("agent_term.notify")
 local state = require("agent_term.runtime.state")
 
