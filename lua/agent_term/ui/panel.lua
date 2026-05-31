@@ -24,6 +24,40 @@ local function apply_window_options(win)
 	end
 end
 
+local function apply_panel_size(win)
+	if not (win and vim.api.nvim_win_is_valid(win)) then
+		return
+	end
+
+	if config.options.panel.position == enums.panel_position.BOTTOM then
+		vim.api.nvim_win_set_height(win, size_from(config.options.panel.height, vim.o.lines))
+	else
+		vim.api.nvim_win_set_width(win, size_from(config.options.panel.width, vim.o.columns))
+	end
+end
+
+local function reconcile_layout()
+	state.each_session(function(_, session)
+		if session.panel_win and vim.api.nvim_win_is_valid(session.panel_win) then
+			apply_panel_size(session.panel_win)
+			apply_window_options(session.panel_win)
+		end
+	end)
+end
+
+function M.reconcile_layout()
+	reconcile_layout()
+end
+
+local function schedule_reconcile_layout()
+	vim.schedule(reconcile_layout)
+end
+
+vim.api.nvim_create_autocmd({ "WinResized", "VimResized", "WinNew", "BufWinEnter" }, {
+	group = augroup,
+	callback = schedule_reconcile_layout,
+})
+
 function M.open(buf, agent_name)
 	local session = state.session(agent_name)
 	if state.has_valid_panel_win(agent_name) then
@@ -41,11 +75,7 @@ function M.open(buf, agent_name)
 	end
 
 	local win = vim.api.nvim_get_current_win()
-	if pos == enums.panel_position.BOTTOM then
-		vim.api.nvim_win_set_height(win, size_from(config.options.panel.height, vim.o.lines))
-	else
-		vim.api.nvim_win_set_width(win, size_from(config.options.panel.width, vim.o.columns))
-	end
+	apply_panel_size(win)
 
 	vim.api.nvim_win_set_buf(win, buf)
 	apply_window_options(win)
