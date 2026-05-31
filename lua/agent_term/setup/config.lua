@@ -242,8 +242,20 @@ function M.auto_resume_args_for_preset(name, mode)
 	return vim.deepcopy(args)
 end
 
----@param agents table<string, any>
+---@param agents table<string|integer, any>
 local function normalize_agents(agents)
+	for index, agent in ipairs(agents) do
+		if type(agent) == "string" then
+			if agents[agent] == nil then
+				agents[agent] = agent
+			end
+			agents[index] = nil
+		else
+			warn_invalid("agents." .. index, "a preset string")
+			agents[index] = nil
+		end
+	end
+
 	for name, agent in pairs(agents) do
 		if type(agent) == "string" then
 			local preset = preset_by_name(agent)
@@ -483,7 +495,9 @@ end
 function M.agent_names(agents)
 	local names = {}
 	for name, _ in pairs(agents or {}) do
-		names[#names + 1] = name
+		if type(name) == "string" then
+			names[#names + 1] = name
+		end
 	end
 	table.sort(names)
 	return names

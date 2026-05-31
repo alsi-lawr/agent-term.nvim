@@ -85,6 +85,46 @@ describe("Given multi-agent configuration", function()
 		end
 	)
 
+	it("When agents include preset list entries Then they expand to named agents", function()
+		local config = require("agent_term.setup.runtime_config")
+		local opts = config.setup({
+			agents = {
+				"claude",
+				"codex",
+				gemini = {
+					preset = "gemini",
+					auto_resume = "last",
+				},
+			},
+		})
+
+		assert.are.same({ "claude" }, opts.agents.claude.cmd)
+		assert.are.equal("claude", opts.agents.claude.preset)
+		assert.are.same({ "codex" }, opts.agents.codex.cmd)
+		assert.are.equal("codex", opts.agents.codex.preset)
+		assert.are.same({ "gemini" }, opts.agents.gemini.cmd)
+		assert.are.equal("last", opts.agents.gemini.auto_resume)
+		assert.is_nil(opts.agents[1])
+		assert.is_nil(opts.agents[2])
+		assert.are.same({ "claude", "codex", "gemini" }, config.agent_names())
+	end)
+
+	it("When preset list entries duplicate named agents Then explicit named config wins", function()
+		local config = require("agent_term.setup.runtime_config")
+		local opts = config.setup({
+			agents = {
+				"gemini",
+				gemini = {
+					preset = "gemini",
+					cmd = { "gemini", "--yolo" },
+				},
+			},
+		})
+
+		assert.are.same({ "gemini", "--yolo" }, opts.agents.gemini.cmd)
+		assert.is_nil(opts.agents[1])
+	end)
+
 	it(
 		"When no persisted agent exists Then the deterministic first configured agent is active",
 		function()

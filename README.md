@@ -89,11 +89,8 @@ by name is used. The selected agent is remembered globally in Neovim state.
 ```lua
 require("agent_term").setup({
   agents = {
-    codex = {
-      preset = "codex",
-      auto_resume = "last",
-      context = { hook = { enabled = true } },
-    },
+    "claude",
+    "codex",
     gemini = {
       preset = "gemini",
       cmd = { "gemini" },
@@ -105,6 +102,9 @@ require("agent_term").setup({
   keymaps = false,
 })
 ```
+
+String list entries are shorthand for preset-only agents. The example above creates named `claude`
+and `codex` agents from their presets, while `gemini` and `custom` use explicit configuration.
 
 Switch the active agent at runtime without editing config:
 

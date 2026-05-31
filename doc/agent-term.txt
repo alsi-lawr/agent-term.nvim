@@ -33,10 +33,8 @@ Basic multi-agent setup:
 >
   require("agent_term").setup({
     agents = {
-      codex = {
-        preset = "codex",
-        auto_resume = "last",
-      },
+      "claude",
+      "codex",
       gemini = {
         preset = "gemini",
         cmd = { "gemini" },
@@ -48,6 +46,9 @@ Basic multi-agent setup:
     keymaps = false,
   })
 <
+
+String list entries are shorthand for preset-only agents. The setup above
+creates named `claude` and `codex` agents from their presets.
 
 COMMANDS                                                      *agent-term-commands*
 
