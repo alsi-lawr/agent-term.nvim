@@ -1,6 +1,18 @@
 ---@diagnostic disable: need-check-nil
 local reload = require("tests.helpers.reload")
 
+local function setup_with_context(context_opts)
+	local config = require("agent_term.setup.runtime_config")
+	config.setup({
+		agents = {
+			codex = {
+				cmd = { "codex" },
+				context = context_opts or {},
+			},
+		},
+	})
+end
+
 describe("Given context message builders", function()
 	local bufnr
 
@@ -18,13 +30,10 @@ describe("Given context message builders", function()
 	end)
 
 	it("When building buffer context Then ambient metadata and visible range are included", function()
-		local config = require("agent_term.setup.runtime_config")
-		config.setup({
-			context = {
-				include_file_path = true,
-				include_filetype = true,
-				include_cursor = true,
-			},
+		setup_with_context({
+			include_file_path = true,
+			include_filetype = true,
+			include_cursor = true,
 		})
 
 		vim.api.nvim_buf_set_name(bufnr, "/tmp/context-buffer.lua")
@@ -46,13 +55,10 @@ describe("Given context message builders", function()
 	it(
 		"When selection context is invoked with a command range Then the explicit range wins",
 		function()
-			local config = require("agent_term.setup.runtime_config")
-			config.setup({
-				context = {
-					include_file_path = false,
-					include_filetype = false,
-					include_selection_range = true,
-				},
+			setup_with_context({
+				include_file_path = false,
+				include_filetype = false,
+				include_selection_range = true,
 			})
 
 			local context = require("agent_term.context.builder")
@@ -69,8 +75,7 @@ describe("Given context message builders", function()
 	it(
 		"When selection context has no command range Then visual marks are used, else a clear error is returned",
 		function()
-			local config = require("agent_term.setup.runtime_config")
-			config.setup()
+			setup_with_context()
 
 			local context = require("agent_term.context.builder")
 			vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, {
@@ -103,13 +108,10 @@ describe("Given context message builders", function()
 	it(
 		"When diagnostics exist Then diagnostics context includes formatted diagnostics from current buffer",
 		function()
-			local config = require("agent_term.setup.runtime_config")
-			config.setup({
-				context = {
-					include_file_path = false,
-					include_filetype = false,
-					include_diagnostics = true,
-				},
+			setup_with_context({
+				include_file_path = false,
+				include_filetype = false,
+				include_diagnostics = true,
 			})
 
 			local ns = vim.api.nvim_create_namespace("agent_term-tests-context-diag")
@@ -143,8 +145,7 @@ describe("Given context message builders", function()
 	it(
 		"When no diagnostics are present Then diagnostics context returns a practical no-op error",
 		function()
-			local config = require("agent_term.setup.runtime_config")
-			config.setup()
+			setup_with_context()
 			local context = require("agent_term.context.builder")
 
 			local message, err = context.diagnostics_message()

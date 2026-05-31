@@ -3,7 +3,7 @@ local config = require("agent_term.setup.runtime_config")
 local M = {}
 
 local function context_file_path()
-	local context_opts = config.options.context
+	local context_opts = config.context()
 	local configured = ".agent-term/context.json"
 	if type(context_opts) == "table" and type(context_opts.file_path) == "string" then
 		configured = context_opts.file_path

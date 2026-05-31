@@ -19,6 +19,9 @@ local handlers = {
 		view_controller.focus(enums.view.FLOAT)
 	end,
 	kill = terminal.kill,
+	switch_agent = function(opts)
+		view_controller.switch_agent(opts.args, { bang = opts.bang })
+	end,
 	float_open = function()
 		view_controller.open(enums.view.FLOAT)
 	end,

@@ -34,22 +34,23 @@ local function dimensions()
 	}
 end
 
-function M.open(buf)
-	if state.has_valid_float_win() then
-		vim.api.nvim_set_current_win(state.float_win)
-		return state.float_win
+function M.open(buf, agent_name)
+	local session = state.session(agent_name)
+	if state.has_valid_float_win(agent_name) then
+		vim.api.nvim_set_current_win(session.float_win)
+		return session.float_win
 	end
 
 	local win = vim.api.nvim_open_win(buf, true, dimensions())
-	state.float_win = win
+	session.float_win = win
 
 	vim.api.nvim_create_autocmd("WinClosed", {
 		group = augroup,
 		pattern = tostring(win),
 		once = true,
 		callback = function()
-			if not state.has_valid_float_win() then
-				state.reset_float_win()
+			if not state.has_valid_float_win(agent_name) then
+				state.reset_float_win(agent_name)
 			end
 		end,
 	})
@@ -57,22 +58,24 @@ function M.open(buf)
 	return win
 end
 
-function M.close()
-	if not state.has_valid_float_win() then
-		state.reset_float_win()
+function M.close(agent_name)
+	local session = state.session(agent_name)
+	if not state.has_valid_float_win(agent_name) then
+		state.reset_float_win(agent_name)
 		return
 	end
 
-	vim.api.nvim_win_close(state.float_win, true)
-	state.reset_float_win()
+	vim.api.nvim_win_close(session.float_win, true)
+	state.reset_float_win(agent_name)
 end
 
-function M.focus()
-	if not state.has_valid_float_win() then
+function M.focus(agent_name)
+	local session = state.session(agent_name)
+	if not state.has_valid_float_win(agent_name) then
 		return false
 	end
 
-	vim.api.nvim_set_current_win(state.float_win)
+	vim.api.nvim_set_current_win(session.float_win)
 	return true
 end
 

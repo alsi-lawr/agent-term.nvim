@@ -8,7 +8,10 @@ local view_controller = require("agent_term.ui.controller")
 local M = {}
 
 local function is_panel_focused()
-	return state.has_valid_panel_win() and vim.api.nvim_get_current_win() == state.panel_win
+	local session = state.session()
+	return state.has_valid_panel_win()
+		and session
+		and vim.api.nvim_get_current_win() == session.panel_win
 end
 
 ---@param kind "buffer"|"selection"|"diagnostics"
@@ -27,7 +30,7 @@ local function send_context(kind, builder)
 	local sent, used_hook, hook_failure = submission.submit(message, kind)
 	if not sent then
 		if used_hook and hook_failure then
-			notify.error(("Failed to write backend hook context: %s"):format(hook_failure))
+			notify.error(("Failed to write agent hook context: %s"):format(hook_failure))
 			return
 		end
 		notify.error("Agent session is not running.")

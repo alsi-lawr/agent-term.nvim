@@ -7,7 +7,7 @@ local M = {}
 local augroup = vim.api.nvim_create_augroup("agent_term_hooks", { clear = true })
 
 local function auto_hook_enabled()
-	local context = config.options.context
+	local context = config.context()
 	local hook = type(context) == "table" and context.hook or nil
 	return type(hook) == "table" and hook.enabled == true
 end
@@ -16,7 +16,7 @@ local function is_editor_buffer(bufnr)
 	if not bufnr or not vim.api.nvim_buf_is_valid(bufnr) then
 		return false
 	end
-	return bufnr ~= state.buf and vim.bo[bufnr].buftype == ""
+	return not state.has_valid_buf() or bufnr ~= state.session().buf and vim.bo[bufnr].buftype == ""
 end
 
 local function update_context()
@@ -29,7 +29,7 @@ local function update_context()
 		return
 	end
 
-	local opts = config.options.context
+	local opts = config.context()
 
 	-- Priority: diagnostics > selection > file
 	if opts.include_diagnostics then

@@ -8,7 +8,8 @@ local NO_CAPTURED_CONTEXT_ERROR =
 	"No captured editor context available yet. Focus a file buffer and retry."
 
 local function is_editor_buffer(bufnr)
-	return bufnr ~= state.buf and vim.bo[bufnr].buftype == ""
+	local session = state.session()
+	return (not session or bufnr ~= session.buf) and vim.bo[bufnr].buftype == ""
 end
 
 local function build_snapshot()

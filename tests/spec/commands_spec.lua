@@ -12,6 +12,7 @@ describe("Given Agent Term command registration", function()
 			"AgentTermToggle",
 			"AgentTermFocus",
 			"AgentTermKill",
+			"AgentTermSwitch",
 			"AgentTermFloatOpen",
 			"AgentTermFloatClose",
 			"AgentTermFloatToggle",
@@ -42,6 +43,7 @@ describe("Given Agent Term command registration", function()
 		assert.is_true(exists("AgentTermPanelToggle"))
 		assert.is_true(exists("AgentTermSendBufferContext"))
 		assert.is_true(exists("AgentTermInstallHooks"))
+		assert.is_true(exists("AgentTermSwitch"))
 		assert.is_true(exists("AgentTermIgnore"))
 	end)
 end)

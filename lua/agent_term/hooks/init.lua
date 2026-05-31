@@ -11,7 +11,7 @@ local installers = {
 }
 
 local function command_name()
-	local agent = config.options.agent
+	local agent = config.agent()
 	local cmd = type(agent) == "table" and agent.cmd or nil
 	if type(cmd) ~= "table" or type(cmd[1]) ~= "string" then
 		return nil
@@ -20,7 +20,7 @@ local function command_name()
 end
 
 local function context_file_path()
-	local context_opts = config.options.context
+	local context_opts = config.context()
 	if type(context_opts) == "table" and type(context_opts.file_path) == "string" then
 		return context_opts.file_path
 	end
@@ -28,7 +28,7 @@ local function context_file_path()
 end
 
 local function auto_hook_enabled()
-	local context = config.options.context
+	local context = config.context()
 	local hook = type(context) == "table" and context.hook or nil
 	return type(hook) == "table" and hook.enabled == true
 end
@@ -53,8 +53,9 @@ function M.install()
 		return false
 	end
 
-	config.options.context.hook = config.options.context.hook or {}
-	config.options.context.hook.enabled = true
+	local context = config.context()
+	context.hook = context.hook or {}
+	context.hook.enabled = true
 
 	local msg
 	if result and result.changed then
@@ -76,12 +77,10 @@ function M.detect()
 	local agent_name = command_name()
 	local installer = agent_name and installers[agent_name] or nil
 
-	-- Only perform safety check/fallback if automatic hook updates are enabled.
 	if not auto_hook_enabled() then
 		return false
 	end
 
-	-- If we don't know how to check this agent, assume it's a custom setup and leave it alone
 	if not installer or type(installer.is_installed) ~= "function" then
 		return false
 	end
@@ -89,8 +88,7 @@ function M.detect()
 	if not installer.is_installed({
 		context_file_path = context_file_path(),
 	}) then
-		-- Fallback to paste mode if hooks are not actually installed on disk
-		config.options.context.hook.enabled = false
+		config.context().hook.enabled = false
 		notify.warn(
 			(
 				"Automatic hook updates enabled for `%s` but native hooks were not found. "
