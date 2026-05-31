@@ -9,17 +9,17 @@
 </p>
 
 <p align="center">
-  <code>agent-term.nvim</code> keeps one persistent interactive terminal-agent session alive and lets you view it as either a centered float or a left, right, or bottom panel.
+  <code>agent-term.nvim</code> keeps persistent interactive terminal-agent sessions inside Neovim and lets you view the active agent as either a centered float or a left, right, or bottom panel.
 </p>
 
 <p align="center">
-  Float and panel are mutually exclusive views over the same terminal buffer, so switching layouts does not start another agent process.
+  Each configured agent gets its own persistent terminal session. Switching agents changes the active view without killing unrelated sessions.
 </p>
 
 <p align="center">
   <a href="#install">Install</a> ·
   <a href="#minimal-configuration">Config</a> ·
-  <a href="#backend-presets">Backends</a> ·
+  <a href="#agent-presets">Agents</a> ·
   <a href="#context-behaviour">Context</a> ·
   <a href="#quick-reference">Quick Reference</a> ·
   <a href="#advanced-docs">Advanced Docs</a>
@@ -29,19 +29,18 @@
 
 <table>
   <tr>
-    <td><strong>One session</strong><br />Keeps a single terminal-agent process alive and reuses it across views.</td>
+    <td><strong>Per-agent sessions</strong><br />Keeps a persistent terminal process for each configured agent.</td>
     <td><strong>Two layouts</strong><br />Switch between float and panel without spawning a second terminal.</td>
     <td><strong>Lightweight context</strong><br />Send buffer, selection, and diagnostics metadata without dumping full contents.</td>
   </tr>
   <tr>
-    <td><strong>Backend presets</strong><br />Start quickly with Codex, Gemini, Claude, Aider, Copilot, or Opencode.</td>
+    <td><strong>Agent presets</strong><br />Start quickly with Codex, Gemini, Claude, Aider, Copilot, or Opencode.</td>
     <td><strong>Custom agents</strong><br />Run any compatible interactive terminal command.</td>
     <td><strong>Automatic resume</strong><br />Optionally start supported presets through a picker or last-session command.</td>
   </tr>
 </table>
 
-The default backend is Codex, but the plugin is backend-agnostic. Presets are best-effort defaults
-for common terminal agents; any compatible interactive command can be configured directly.
+The default agent is Codex. Presets are best-effort defaults for common terminal agents; any compatible interactive command can be configured directly.
 
 ## Why agent-term.nvim?
 
@@ -52,9 +51,9 @@ That means Codex, Claude, Gemini, Aider, Copilot, OpenCode, and other terminal a
 own slash commands, menus, model switching, permission flows, hooks, highlighting/autocomplete,
 and session behavior when supported by the agent TUI.
 
-The plugin adds a Neovim bridge around that native UI: one persistent terminal session, float/panel
-views, editor context capture, diagnostics/selection/buffer metadata, keymaps, startup/kill helpers,
-and optional native hook installation.
+The plugin adds a Neovim bridge around that native UI: persistent per-agent terminal sessions,
+float/panel views, editor context capture, diagnostics/selection/buffer metadata, keymaps,
+runtime agent switching, startup/kill helpers, and optional native hook installation.
 
 ## Requirements
 
@@ -84,46 +83,51 @@ The `keys` block above is a lazy.nvim example. Plugin-managed keymaps are disabl
 
 ## Minimal Configuration
 
-Use a preset when the default command is enough:
+Configure one or more named agents. If no persisted active agent exists, the first configured agent
+by name is used. The selected agent is remembered globally in Neovim state.
 
 ```lua
 require("agent_term").setup({
-  agent = "claude",
+  agents = {
+    "claude",
+    "codex",
+    gemini = {
+      preset = "gemini",
+      cmd = { "gemini" },
+    },
+    custom = {
+      cmd = { "my-agent" },
+    },
+  },
+  keymaps = false,
 })
 ```
 
-Or override the command while inheriting preset defaults:
+String list entries are shorthand for preset-only agents. The example above creates named `claude`
+and `codex` agents from their presets, while `gemini` and `custom` use explicit configuration.
 
-```lua
-require("agent_term").setup({
-  agent = {
-    preset = "codex",
-    cmd = { "codex", "--model", "gpt-5.4-mini" },
-  },
-})
+Switch the active agent at runtime without editing config:
+
+```vim
+:AgentTermSwitch gemini
+:AgentTermSwitch codex
 ```
 
-Custom commands are supported too. Plain custom commands default to paste-based context and normal
-startup:
+`:AgentTermSwitch` with no arguments prints the current active agent. Completion includes configured
+agent names only. `:AgentTermSwitch! <name>` kills and recreates only the target agent session;
+normal switching never kills unrelated agents.
 
-```lua
-require("agent_term").setup({
-  agent = {
-    cmd = { "my-agent" },
-  },
-  context = {
-    file_path = ".agent-term/context.json",
-    target_view = "default", -- "default" | "float" | "panel"
-  },
-})
-```
+<p align="center">
+  <img src="docs/assets/agent-switching-demo.gif" alt="agent-term.nvim switching between Codex and Gemini agents" width="900" />
+</p>
 
-`backend = "..."` is also accepted as an alias for `agent = "..."`.
+Per-agent `preset`, `cmd`, `auto_resume`, and `context` settings are applied when that agent creates
+its terminal session.
 
-## Backend Presets
+## Agent Presets
 
 Presets are convenience defaults, not a guarantee of feature parity across tools. Exact commands and
-caveats are documented in [docs/backends.md](docs/backends.md).
+caveats are documented in [docs/agents.md](docs/agents.md).
 
 | Preset | Command | Hook installer support | Auto-resume picker | Auto-resume last |
 | --- | --- | --- | --- | --- |
@@ -134,9 +138,9 @@ caveats are documented in [docs/backends.md](docs/backends.md).
 | `copilot` | `copilot` | paste | `copilot --resume` | `copilot --continue` |
 | `opencode` | `opencode` | paste | unavailable | `opencode --continue` |
 
-`agent.auto_resume` accepts `"picker"`, `"last"`, `false`, or `nil`. The default is unset.
+`agents.<name>.auto_resume` accepts `"picker"`, `"last"`, `false`, or `nil`. The default is unset.
 When a preset command is overridden, the selected auto-resume arguments are appended to
-`agent.cmd`.
+`agents.<name>.cmd`.
 
 Supported enum values are available at `require("agent_term.enums").agent`.
 
@@ -166,17 +170,17 @@ Supported enum values are available at `require("agent_term.enums").agent`.
   <tr>
     <td>Install native agent hooks</td>
     <td><code>:AgentTermInstallHooks</code></td>
-    <td><a href="docs/backends.md#native-hook-installation">Native hooks</a></td>
+    <td><a href="docs/agents.md#native-hook-installation">Native hooks</a></td>
   </tr>
   <tr>
-    <td>Switch backend preset</td>
-    <td><code>agent = "claude"</code></td>
-    <td><a href="docs/backends.md">Backend presets</a></td>
+    <td>Switch active agent</td>
+    <td><code>:AgentTermSwitch claude</code></td>
+    <td><a href="docs/agents.md">Agent presets</a></td>
   </tr>
   <tr>
-    <td>Override backend flags</td>
-    <td><code>agent = { preset = "...", cmd = { ... } }</code></td>
-    <td><a href="docs/backends.md">Backend presets</a></td>
+    <td>Override agent flags</td>
+    <td><code>agents = { name = { preset = "...", cmd = { ... } } }</code></td>
+    <td><a href="docs/agents.md">Agent presets</a></td>
   </tr>
   <tr>
     <td>Run checks locally</td>
@@ -195,7 +199,7 @@ Context commands send lightweight editor metadata, not full buffer contents.
 
 ### Automatic Updates (Hook Integration)
 
-When automatic hook updates are enabled (`context.hook.enabled = true`), `agent-term.nvim` updates
+When automatic hook updates are enabled (`agents.<name>.context.hook.enabled = true`), `agent-term.nvim` updates
 the hook context file in the background on buffer switch, diagnostics change, or after leaving
 visual/select mode. It uses a priority system to ensure the most relevant context is always
 available:
@@ -214,15 +218,15 @@ The plugin manages repo-level state in the `.agent-term/` directory by default.
 
 Manual context commands always paste context into the running terminal job.
 
-Optional hook integration writes the latest context payload to `context.file_path` (default:
+Optional hook integration writes the latest context payload to `agents.<name>.context.file_path` (default:
 `.agent-term/context.json`) for native agent hooks to consume during prompt lifecycle events. Run
-`:AgentTermInstallHooks` to install supported native hooks for the configured agent.
+`:AgentTermInstallHooks` to install supported native hooks for the active agent.
 
 Hook installation is explicit. Normal setup does not modify project or user agent config files.
 Codex, Claude, and Gemini support native hook installation. Aider, Copilot, and Opencode stay
 paste-only unless you explicitly configure a verified native hook integration.
 
-If the agent is not running, context commands open the configured `context.target_view`. The default
+If the active agent is not running, context commands open the configured `agents.<name>.context.target_view`. The default
 target reuses an open panel when one exists, otherwise it opens a float.
 
 ## Common Commands
@@ -230,7 +234,8 @@ target reuses an open panel when one exists, otherwise it opens a float.
 - `:AgentTermToggle`: open or hide the default floating view.
 - `:AgentTermPanelToggle`: open or hide the panel view.
 - `:AgentTermClose`: close agent windows while keeping the process alive.
-- `:AgentTermKill`: stop the process, close windows, delete the terminal buffer, and clear state.
+- `:AgentTermKill`: stop the active agent process, close its windows, delete its terminal buffer, and clear its state.
+- `:AgentTermSwitch [agent]`: show or switch the active agent. Use `!` to kill and recreate the target agent session.
 - `:AgentTermSendBufferContext`: send lightweight metadata for the current buffer.
 - `:AgentTermSendSelectionContext`: send lightweight metadata for the selected range.
 - `:AgentTermSendDiagnosticsContext`: send compact diagnostics for the current buffer.
@@ -244,15 +249,15 @@ with `Panel`.
 ## Troubleshooting
 
 - `Agent command not found`: check `:echo executable('your-agent-command')` or configure
-  `agent.cmd`.
+  `agents.<name>.cmd`.
 - No selection context: reselect text or run `:'<,'>AgentTermSendSelectionContext`.
-- `agent.auto_resume = "picker"` or `"last"` starts known presets with that auto-resume mode.
+- `agents.<name>.auto_resume = "picker"` or `"last"` starts known presets with that auto-resume mode.
   Custom commands start normally because there is no preset behavior to infer.
-- To enable automatic native hook updates, install hooks and set `context.hook.enabled = true`.
+- To enable automatic native hook updates, install hooks and set `agents.<name>.context.hook.enabled = true`.
 
 ## Advanced Docs
 
-- [Backend presets](docs/backends.md): exact preset commands, auto-resume behavior, context modes,
-  and backend caveats.
-- [Contribution guide](CONTRIBUTING.md): development setup, project layout, backend-change
+- [Agent presets](docs/agents.md): exact preset commands, auto-resume behavior, context modes,
+  and agent caveats.
+- [Contribution guide](CONTRIBUTING.md): development setup, project layout, agent-change
   expectations, testing commands, coverage notes, and PR guidance.

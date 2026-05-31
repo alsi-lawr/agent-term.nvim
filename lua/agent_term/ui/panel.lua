@@ -24,10 +24,11 @@ local function apply_window_options(win)
 	end
 end
 
-function M.open(buf)
-	if state.has_valid_panel_win() then
-		vim.api.nvim_set_current_win(state.panel_win)
-		return state.panel_win
+function M.open(buf, agent_name)
+	local session = state.session(agent_name)
+	if state.has_valid_panel_win(agent_name) then
+		vim.api.nvim_set_current_win(session.panel_win)
+		return session.panel_win
 	end
 
 	local pos = config.options.panel.position
@@ -48,15 +49,15 @@ function M.open(buf)
 
 	vim.api.nvim_win_set_buf(win, buf)
 	apply_window_options(win)
-	state.panel_win = win
+	session.panel_win = win
 
 	vim.api.nvim_create_autocmd("WinClosed", {
 		group = augroup,
 		pattern = tostring(win),
 		once = true,
 		callback = function()
-			if not state.has_valid_panel_win() then
-				state.reset_panel_win()
+			if not state.has_valid_panel_win(agent_name) then
+				state.reset_panel_win(agent_name)
 			end
 		end,
 	})
@@ -64,22 +65,24 @@ function M.open(buf)
 	return win
 end
 
-function M.close()
-	if not state.has_valid_panel_win() then
-		state.reset_panel_win()
+function M.close(agent_name)
+	local session = state.session(agent_name)
+	if not state.has_valid_panel_win(agent_name) then
+		state.reset_panel_win(agent_name)
 		return
 	end
 
-	vim.api.nvim_win_close(state.panel_win, true)
-	state.reset_panel_win()
+	vim.api.nvim_win_close(session.panel_win, true)
+	state.reset_panel_win(agent_name)
 end
 
-function M.focus()
-	if not state.has_valid_panel_win() then
+function M.focus(agent_name)
+	local session = state.session(agent_name)
+	if not state.has_valid_panel_win(agent_name) then
 		return false
 	end
 
-	vim.api.nvim_set_current_win(state.panel_win)
+	vim.api.nvim_set_current_win(session.panel_win)
 	return true
 end
 

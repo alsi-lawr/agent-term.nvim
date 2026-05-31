@@ -79,7 +79,7 @@ function M.buffer_message()
 	local lines = make_header("file")
 	push(lines, "type: buffer")
 
-	local opts = config.options.context
+	local opts = config.context()
 	append_common_metadata(lines, bufnr, opts)
 	if opts.include_cursor then
 		local line, col = cursor_line()
@@ -109,7 +109,7 @@ function M.selection_message(command_opts)
 	local lines = make_header("selection")
 	push(lines, "type: selection")
 
-	local context_opts = config.options.context
+	local context_opts = config.context()
 	append_common_metadata(lines, bufnr, context_opts)
 	if context_opts.include_selection_range then
 		push(lines, ("selection: lines %d-%d"):format(first, last))
@@ -129,7 +129,7 @@ function M.diagnostics_message()
 	local lines = make_header("diagnostics")
 	push(lines, "type: diagnostics")
 
-	local opts = config.options.context
+	local opts = config.context()
 	append_common_metadata(lines, bufnr, opts)
 
 	if opts.include_diagnostics then

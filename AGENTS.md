@@ -4,8 +4,8 @@
 
 - Prefer clean, direct design with explicit module boundaries. Add compatibility layers only when
   there is a concrete supported-compatibility requirement.
-- Keep the plugin backend-neutral. Use `agent`, `backend`, `session`, `terminal`, or
-  capability-oriented names for new code.
+- Keep the plugin agent-neutral. Use `agent`, `session`, `terminal`, or capability-oriented names
+  for new code.
 - Use `codex` only for the Codex preset/default command, demo material, or user-facing examples
   that explicitly refer to Codex.
 - Do not add root-level shim modules in `lua/agent_term/` just to re-export deeper modules. Require
@@ -28,17 +28,16 @@
   - `tests/helpers/`: test utilities.
 - Docs/media live in `README.md`, `docs/`, and `assets/`.
 
-## Backend And Context Semantics
+## Agent And Context Semantics
 
-- Backend behavior should be expressed as capabilities on `agent`, not as hard-coded backend names.
+- Agent behavior should be expressed as capabilities on `agent`, not as hard-coded agent names.
 - Presets may provide defaults, but explicit user config should override preset behavior.
-- `agent` and `backend` are aliases in config; keep behavior aligned if either spelling is touched.
-- Context submission supports backend modes:
+- Context submission supports agent modes:
   - `paste`: send context visibly to the running terminal job.
   - `hook`: emit the configured `User` autocmd hook and fall back to paste if no receiver handles it.
-- Hook mode is backend-driven, not view-driven. It must work from panel mode, float mode, and source
+- Hook mode is agent-driven, not view-driven. It must work from panel mode, float mode, and source
   windows while a panel exists.
-- Do not infer hook context support from a backend having hooks generally. For example, Copilot and
+- Do not infer hook context support from an agent having hooks generally. For example, Copilot and
   Opencode use paste mode because their hooks are not compatible with this context-injection path.
 - Panel focus only affects which editor context is used. When the panel is focused, use the last
   captured source context instead of reading context from the terminal buffer.

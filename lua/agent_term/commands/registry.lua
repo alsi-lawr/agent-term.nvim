@@ -1,6 +1,11 @@
+local config = require("agent_term.setup.runtime_config")
 local dispatch = require("agent_term.runtime.dispatch")
 
 local M = {}
+
+local function complete_agents()
+	return config.agent_names()
+end
 
 local COMMAND_SPECS = {
 	{ "AgentTermOpen", "open", "Open/focus Agent Term", {} },
@@ -8,6 +13,12 @@ local COMMAND_SPECS = {
 	{ "AgentTermToggle", "toggle", "Toggle Agent Term", {} },
 	{ "AgentTermFocus", "focus", "Focus Agent Term", {} },
 	{ "AgentTermKill", "kill", "Kill Agent Term terminal session", {} },
+	{
+		"AgentTermSwitch",
+		"switch_agent",
+		"Switch active Agent Term agent",
+		{ nargs = "?", bang = true, complete = complete_agents },
+	},
 
 	{ "AgentTermFloatOpen", "float_open", "Open/focus Agent Term float", {} },
 	{ "AgentTermFloatClose", "float_close", "Close Agent Term float", {} },

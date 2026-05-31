@@ -33,21 +33,26 @@ local function delete_buf_if_valid(buf)
 	end
 end
 
-local function clear_session_views()
-	close_win_if_valid(state.float_win)
-	close_win_if_valid(state.panel_win)
-	state.reset_float_win()
-	state.reset_panel_win()
+local function clear_session_views(agent_name)
+	local session = state.session(agent_name)
+	if not session then
+		return
+	end
+	close_win_if_valid(session.float_win)
+	close_win_if_valid(session.panel_win)
+	state.reset_float_win(agent_name)
+	state.reset_panel_win(agent_name)
 end
 
-local function clear_exited_session(job_id)
-	if state.job_id ~= job_id then
+local function clear_exited_session(agent_name, job_id)
+	local session = state.session(agent_name)
+	if not session or session.job_id ~= job_id then
 		return
 	end
 
-	local buf = state.buf
-	state.reset_terminal()
-	clear_session_views()
+	local buf = session.buf
+	state.reset_terminal(agent_name)
+	clear_session_views(agent_name)
 	delete_buf_if_valid(buf)
 end
 
@@ -55,28 +60,36 @@ function M.send(text)
 	if not state.has_running_job() then
 		return false
 	end
-	vim.api.nvim_chan_send(state.job_id, text)
+	local session = state.session()
+	vim.api.nvim_chan_send(session.job_id, text)
 	return true
 end
 
-function M.ensure_session(cmd)
-	if state.has_valid_buf() and state.has_running_job() then
-		return state.buf
+function M.ensure_session(cmd, agent_name)
+	agent_name = agent_name or config.active_agent
+	local session = state.session(agent_name)
+	if not session then
+		return nil
 	end
 
-	if state.has_valid_buf() and not state.has_running_job() then
-		delete_buf_if_valid(state.buf)
-		state.reset_terminal()
+	if state.has_valid_buf(agent_name) and state.has_running_job(agent_name) then
+		return session.buf
 	end
 
-	local run_cmd = cmd or config.auto_resume_command() or config.options.agent.cmd
+	if state.has_valid_buf(agent_name) and not state.has_running_job(agent_name) then
+		delete_buf_if_valid(session.buf)
+		state.reset_terminal(agent_name)
+	end
+
+	local agent = config.agent(agent_name)
+	local run_cmd = cmd or config.auto_resume_command(agent_name) or (agent and agent.cmd)
 	if not can_run_cmd(run_cmd) then
 		notify.error(("Agent command not found: %s"):format(command_name(run_cmd)))
 		return nil
 	end
 
 	local buf = vim.api.nvim_create_buf(false, true)
-	state.buf = buf
+	session.buf = buf
 
 	local job_id
 	vim.api.nvim_buf_call(buf, function()
@@ -84,7 +97,7 @@ function M.ensure_session(cmd)
 			term = true,
 			on_exit = function(exited_job_id)
 				vim.schedule(function()
-					clear_exited_session(exited_job_id)
+					clear_exited_session(agent_name, exited_job_id)
 				end)
 			end,
 		})
@@ -93,44 +106,58 @@ function M.ensure_session(cmd)
 	if not (job_id and job_id > 0) then
 		notify.error(("Failed to start agent command: %s"):format(table.concat(run_cmd, " ")))
 		delete_buf_if_valid(buf)
-		state.reset_terminal()
+		state.reset_terminal(agent_name)
 		return nil
 	end
 
-	state.job_id = job_id
+	session.job_id = job_id
 
 	vim.api.nvim_create_autocmd("BufWipeout", {
 		group = augroup,
 		buffer = buf,
 		once = true,
 		callback = function()
-			state.reset_terminal()
-			close_win_if_valid(state.float_win)
-			close_win_if_valid(state.panel_win)
-			state.reset_float_win()
-			state.reset_panel_win()
+			state.reset_terminal(agent_name)
+			clear_session_views(agent_name)
 		end,
 	})
 
 	return buf
 end
 
-function M.close_views()
-	clear_session_views()
+function M.close_views(agent_name)
+	clear_session_views(agent_name or config.active_agent)
 end
 
-function M.kill()
-	M.close_views()
+function M.close_all_views_except(agent_name)
+	state.each_session(function(name, session)
+		if name ~= agent_name then
+			close_win_if_valid(session.float_win)
+			close_win_if_valid(session.panel_win)
+			state.reset_float_win(name)
+			state.reset_panel_win(name)
+		end
+	end)
+end
 
-	if state.job_id and state.job_id > 0 then
-		pcall(vim.fn.jobstop, state.job_id)
+function M.kill(agent_name)
+	agent_name = agent_name or config.active_agent
+	local session = state.session(agent_name)
+	if not session then
+		return
 	end
 
-	if state.has_valid_buf() then
-		delete_buf_if_valid(state.buf)
+	M.close_views(agent_name)
+
+	if session.job_id and session.job_id > 0 then
+		pcall(vim.fn.jobstop, session.job_id)
 	end
 
-	state.reset_terminal()
+	if state.has_valid_buf(agent_name) then
+		delete_buf_if_valid(session.buf)
+	end
+
+	state.reset_terminal(agent_name)
 end
 
 return M

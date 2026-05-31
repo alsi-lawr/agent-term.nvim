@@ -5,7 +5,7 @@ local terminal = require("agent_term.runtime.session")
 local M = {}
 
 local function auto_hook_enabled()
-	local context = config.options.context
+	local context = config.context()
 	local hook = type(context) == "table" and context.hook or nil
 	return type(hook) == "table" and hook.enabled == true
 end

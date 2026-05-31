@@ -2,6 +2,7 @@ local config = require("agent_term.setup.runtime_config")
 local captured_context = require("agent_term.context.captured")
 local enums = require("agent_term.enums")
 local float = require("agent_term.ui.float")
+local notify = require("agent_term.notify")
 local panel = require("agent_term.ui.panel")
 local state = require("agent_term.runtime.state")
 local terminal = require("agent_term.runtime.session")
@@ -14,22 +15,23 @@ local function enter_insert_mode()
 end
 
 ---@param view "float"|"panel"
----@param opts? { enter_insert?: boolean }
+---@param opts? { enter_insert?: boolean, agent_name?: string }
 ---@return boolean
 function M.open(view, opts)
 	opts = opts or {}
+	local agent_name = opts.agent_name or config.active_agent
 	captured_context.capture_before_view_switch()
-	local buf = terminal.ensure_session()
+	local buf = terminal.ensure_session(nil, agent_name)
 	if not buf then
 		return false
 	end
 
 	if view == enums.view.PANEL then
-		float.close()
-		panel.open(buf)
+		float.close(agent_name)
+		panel.open(buf, agent_name)
 	else
-		panel.close()
-		float.open(buf)
+		panel.close(agent_name)
+		float.open(buf, agent_name)
 	end
 
 	if opts.enter_insert ~= false then
@@ -43,10 +45,10 @@ end
 ---@return nil
 function M.close(view)
 	if view == enums.view.PANEL then
-		panel.close()
+		panel.close(config.active_agent)
 		return
 	end
-	float.close()
+	float.close(config.active_agent)
 end
 
 ---@param view "float"|"panel"
@@ -65,7 +67,8 @@ end
 ---@return nil
 function M.focus(view)
 	captured_context.capture_before_view_switch()
-	local focused = view == enums.view.PANEL and panel.focus() or float.focus()
+	local focused = view == enums.view.PANEL and panel.focus(config.active_agent)
+		or float.focus(config.active_agent)
 	if focused then
 		enter_insert_mode()
 		return
@@ -75,7 +78,8 @@ end
 
 ---@return "float"|"panel"
 function M.resolve_context_view()
-	local target = config.options.context.target_view
+	local context = config.context()
+	local target = context and context.target_view or CONTEXT_TARGET_DEFAULT
 	if target == CONTEXT_TARGET_DEFAULT then
 		if state.has_valid_panel_win() then
 			return enums.view.PANEL
@@ -91,6 +95,41 @@ function M.ensure_started_for_context()
 		return true
 	end
 	return M.open(M.resolve_context_view(), { enter_insert = false })
+end
+
+---@param name? string
+---@param opts? { bang?: boolean }
+---@return boolean
+function M.switch_agent(name, opts)
+	opts = opts or {}
+	if type(name) ~= "string" or name == "" then
+		notify.info(("Active agent: %s"):format(config.active_agent or "none"))
+		return true
+	end
+
+	local previous = config.active_agent
+	local view = state.current_view()
+	if not config.set_active_agent(name) then
+		return false
+	end
+
+	if opts.bang then
+		terminal.kill(name)
+	end
+
+	if view then
+		if previous and previous ~= name then
+			terminal.close_views(previous)
+		end
+		terminal.close_all_views_except(name)
+		return M.open(view, { agent_name = name })
+	end
+
+	if opts.bang then
+		return terminal.ensure_session(nil, name) ~= nil
+	end
+
+	return true
 end
 
 return M

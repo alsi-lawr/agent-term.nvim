@@ -1,9 +1,9 @@
 *agent-term.nvim.txt*   agent-term.nvim help
 
 agent-term.nvim is a Neovim bridge for terminal-based coding agents.
-It keeps one persistent terminal-agent session and shows it in float/panel views.
+It keeps persistent terminal-agent sessions and shows the active agent in
+float/panel views.
 
-==============================================================================
 CONTENTS                                                    *agent-term-contents*
 
 1. Requirements .............................................. |agent-term-requirements|
@@ -13,134 +13,127 @@ CONTENTS                                                    *agent-term-contents
 5. Hooks ..................................................... |agent-term-hooks|
 6. Lua API ................................................... |agent-term-api|
 
-==============================================================================
 REQUIREMENTS                                              *agent-term-requirements*
 
 - Neovim 0.12+
 - An installed terminal coding agent (for example: codex, claude, gemini)
 
-==============================================================================
 SETUP                                                            *agent-term-setup*
 
-With lazy.nvim >
+With lazy.nvim:
+>
   {
     "alsi-lawr/agent-term.nvim",
     main = "agent_term",
     opts = {},
   }
 <
-Minimal setup >
+
+Basic multi-agent setup:
+>
   require("agent_term").setup({
-    agent = "codex",
+    agents = {
+      "claude",
+      "codex",
+      gemini = {
+        preset = "gemini",
+        cmd = { "gemini" },
+      },
+      custom = {
+        cmd = { "my-agent" },
+      },
+    },
+    keymaps = false,
   })
 <
-==============================================================================
+
+String list entries are shorthand for preset-only agents. The setup above
+creates named `claude` and `codex` agents from their presets.
+
 COMMANDS                                                      *agent-term-commands*
 
-General:
   :AgentTermOpen                    Open/focus default (float) view
-  :AgentTermClose                   Close all AgentTerm windows, keep process
+  :AgentTermClose                   Close active AgentTerm windows, keep process
   :AgentTermToggle                  Toggle default (float) view
   :AgentTermFocus                   Focus default (float) view
-  :AgentTermKill                    Stop process and clear terminal state
+  :AgentTermKill                    Stop active agent process and clear its state
+  :AgentTermSwitch [agent]          Show or switch the active agent
+  :AgentTermSwitch! {agent}         Kill/recreate only the target agent session
 
-Float:
   :AgentTermFloatOpen
   :AgentTermFloatClose
   :AgentTermFloatToggle
   :AgentTermFloatFocus
 
-Panel:
   :AgentTermPanelOpen
   :AgentTermPanelClose
   :AgentTermPanelToggle
   :AgentTermPanelFocus
 
-Context:
   :AgentTermSendBufferContext
   :AgentTermSendSelectionContext
   :AgentTermSendDiagnosticsContext
 
-Hooks and utility:
   :AgentTermInstallHooks
   :AgentTermIgnore
 
-==============================================================================
 CONFIGURATION                                                    *agent-term-config*
 
 Call `require("agent_term").setup(opts)`.
 
 Top-level keys:
-  `agent`      Agent preset string or explicit table
-  `backend`    Alias of `agent`
-  `float`      Float window options
-  `panel`      Panel window options
-  `context`    Context and hook options
-  `keymaps`    Table of keymaps, or `false` to disable
 
-Agent presets:
-  "codex", "gemini", "claude", "aider", "copilot", "opencode"
+  `agents`        Named agent definitions
+  `active_agent`  Optional default active agent when no persisted agent exists
+  `float`         Floating window layout
+  `panel`         Panel layout
+  `keymaps`       Keymap overrides or `false`
 
-Example (preset with command override) >
-  require("agent_term").setup({
-    agent = {
-      preset = "codex",
-      cmd = { "codex", "--model", "gpt-5.4-mini" },
-      auto_resume = "last",
-    },
-  })
-<
-Example (custom command + auto hook updates) >
-  require("agent_term").setup({
-    agent = {
-      cmd = { "my-agent" },
-    },
-    context = {
-      hook = { enabled = true },
-    },
-  })
-<
-`agent` keys:
-  `preset`       Preset name to inherit defaults from
-  `cmd`          Terminal command as a string list
+Agent keys:
+
+  `preset`       "codex" | "gemini" | "claude" | "aider" | "copilot" | "opencode"
+  `cmd`          Command list, for example `{ "codex" }`
   `auto_resume`  false | nil | "picker" | "last"
+  `context`      Per-agent context and hook behavior
 
-`context` keys:
-  `file_path`                Path for hook context JSON file
+Context keys:
+
+  `file_path`                Default: `.agent-term/context.json`
   `target_view`              "default" | "float" | "panel"
-  `hook.enabled`             Enable automatic hook file updates
-  `include_file_path`        Include file path in context payload
-  `include_filetype`         Include filetype in context payload
-  `include_cursor`           Include cursor location for buffer context
-  `include_selection_range`  Include line range for selection context
-  `include_diagnostics`      Include diagnostics context data
+  `hook.enabled`             Enable automatic hook context file updates
+  `include_file_path`
+  `include_filetype`
+  `include_cursor`
+  `include_selection_range`
+  `include_diagnostics`
 
-==============================================================================
+Each configured agent can have its own persistent terminal session. Normal
+`:AgentTermSwitch {agent}` changes the active agent without killing existing
+sessions. Bang switching recreates only the target agent session.
+
+The active agent is remembered globally under `stdpath("state")`.
+
 HOOKS                                                            *agent-term-hooks*
 
-Manual context commands always paste to the terminal job.
+Manual context commands always paste context into the active terminal job.
 
-If `context.hook.enabled = true`, agent-term.nvim also writes context payloads to
-`context.file_path` for native hook consumers.
+If `agents.<name>.context.hook.enabled = true`, agent-term.nvim also writes
+context payloads to `agents.<name>.context.file_path` for supported native
+agent hooks.
 
-Run `:AgentTermInstallHooks` to install supported native hooks:
-  - codex
-  - claude
-  - gemini
+Run `:AgentTermInstallHooks` to install supported native hooks for the active
+agent. Codex, Claude, and Gemini have installers. Unsupported agents warn and
+continue using paste mode.
 
-For unsupported agents, install command warns and no hook files are written.
-
-==============================================================================
 LUA API                                                          *agent-term-api*
 
-Main module: >
+>
   local agent_term = require("agent_term")
+
+  agent_term.setup(opts)
+  agent_term.get_active_agent()
+  agent_term.set_active_agent("gemini")
+  agent_term.set_active_agent("codex", { bang = true })
 <
-Functions:
-  `setup(opts)`
 
-Runtime operations are exposed through user commands and keymaps, not the root
-Lua module.
-
-==============================================================================
-vim:tw=78:ts=8:noet:ft=help:norl:
+See README.md and docs/agents.md for detailed examples.

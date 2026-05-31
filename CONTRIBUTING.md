@@ -31,7 +31,7 @@ If Plenary is not installed in a standard runtime path, set `PLENARY_PATH` when 
 ## Making Changes
 
 - Keep changes scoped to one logical behavior or documentation update.
-- Prefer backend-neutral names such as `agent`, `backend`, `session`, and `terminal`.
+- Prefer agent-neutral names such as `agent`, `session`, and `terminal`.
 - Keep `codex` naming limited to the Codex preset/default command or examples that explicitly refer
   to Codex.
 - Do not add root-level re-export shim modules in `lua/agent_term/`; require the real module path.
@@ -41,19 +41,19 @@ If Plenary is not installed in a standard runtime path, set `PLENARY_PATH` when 
 - For config, validate the existing supported surfaces, but do not build defensive guards around
   every invalid Lua shape unless there is a concrete user-facing reason.
 
-## Backend Changes
+## Agent Preset Changes
 
-Backend presets are best-effort defaults, not a guarantee of feature parity between tools. When
+Agent presets are best-effort defaults, not a guarantee of feature parity between tools. When
 adding or changing a preset:
 
 - Add or update the preset in `lua/agent_term/setup/config.lua`.
 - Add enum and annotation updates when a new preset is user-selectable.
-- Document exact commands and caveats in `docs/backends.md`.
+- Document exact commands and caveats in `docs/agents.md`.
 - Keep the README summary compact.
 - Add config specs for command, context mode, and resume capability behavior.
 
-Do not infer hook context support from a backend having hooks generally. Hook mode is only for
-backends that support this context-injection path.
+Do not infer hook context support from an agent having hooks generally. Hook mode is only for
+agents that support this context-injection path.
 
 ## Testing
 
@@ -100,7 +100,7 @@ luacheck lua tests
 - For UI behavior, cover stale windows, closed buffers, focus changes, and view reuse where relevant.
 - For context behavior, cover panel-focused captured context, source-window context, hook
   acknowledgement, and hook fallback where relevant.
-- For backend/config behavior, cover presets, custom commands, resume capability gating, and invalid
+- For agent/config behavior, cover presets, custom commands, resume capability gating, and invalid
   supported config values.
 
 This repo uses Plenary because the tests need Neovim-hosted integration coverage for windows,
@@ -127,7 +127,7 @@ PRs should include:
 
 Use conventional commit style for commits where practical, for example:
 
-- `feat(config): add backend preset`
+- `feat(config): add agent preset`
 - `fix(context): preserve source buffer context`
 - `test(nvim): cover panel focus behavior`
-- `docs(readme): simplify backend summary`
+- `docs(readme): simplify agent summary`

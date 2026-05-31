@@ -42,7 +42,7 @@ describe("Given native agent hook installation", function()
 	it("When installing Codex hooks Then global hook config and script are written", function()
 		local plugin = require("agent_term")
 		local hooks = require("agent_term.hooks")
-		plugin.setup({ agent = "codex" })
+		plugin.setup({ agents = { codex = { preset = "codex" } } })
 
 		assert.is_true(hooks.install())
 
@@ -51,7 +51,7 @@ describe("Given native agent hook installation", function()
 		assert.are.equal("command", handler.type)
 		assert.is_not_nil(handler.command:match("%.codex/hooks/agent_term_context%.py"))
 		assert.is_not_nil(handler.command:match("%$PWD/.agent%-term/context%.json"))
-		assert.is_true(require("agent_term.setup.runtime_config").options.context.hook.enabled)
+		assert.is_true(require("agent_term.setup.runtime_config").context().hook.enabled)
 		assert.are.equal(1, vim.fn.filereadable(path(".codex/hooks/agent_term_context.py")))
 	end)
 
@@ -60,7 +60,7 @@ describe("Given native agent hook installation", function()
 		function()
 			local plugin = require("agent_term")
 			local hooks = require("agent_term.hooks")
-			plugin.setup({ agent = "codex" })
+			plugin.setup({ agents = { codex = { preset = "codex" } } })
 			hooks.install()
 			vim.fn.mkdir(path(".agent-term"), "p")
 			vim.fn.writefile({
@@ -88,7 +88,7 @@ describe("Given native agent hook installation", function()
 		"When AgentTermInstallHooks runs for Claude Then it dispatches to the Claude installer",
 		function()
 			local plugin = require("agent_term")
-			plugin.setup({ agent = "claude" })
+			plugin.setup({ agents = { claude = { preset = "claude" } } })
 
 			vim.cmd.AgentTermInstallHooks()
 
@@ -105,7 +105,7 @@ describe("Given native agent hook installation", function()
 	it("When global hook entries already exist Then install leaves config unchanged", function()
 		local plugin = require("agent_term")
 		local hooks = require("agent_term.hooks")
-		plugin.setup({ agent = "codex" })
+		plugin.setup({ agents = { codex = { preset = "codex" } } })
 		assert.is_true(hooks.install())
 
 		local hooks_path = path(".codex/hooks.json")
@@ -121,7 +121,7 @@ describe("Given native agent hook installation", function()
 		"When AgentTermInstallHooks runs for Gemini Then it dispatches to the Gemini installer",
 		function()
 			local plugin = require("agent_term")
-			plugin.setup({ agent = "gemini" })
+			plugin.setup({ agents = { gemini = { preset = "gemini" } } })
 
 			vim.cmd.AgentTermInstallHooks()
 
@@ -138,7 +138,7 @@ describe("Given native agent hook installation", function()
 		function()
 			local plugin = require("agent_term")
 			local hooks = require("agent_term.hooks")
-			plugin.setup({ agent = "aider" })
+			plugin.setup({ agents = { aider = { preset = "aider" } } })
 
 			assert.is_false(hooks.install())
 
