@@ -38,7 +38,7 @@ Type `vim.opt.runtimepath:prepend(os.getenv("AGENT_TERM_NVIM_REPO"))`
 Enter
 Type `require("agent_term").setup({`
 Enter
-Type `  agent = "gemini",`
+Type `  agents = { "gemini" },`
 Enter
 Type `})`
 Enter
@@ -88,7 +88,7 @@ Type@110ms "What editor context have you received? Mention the active file name 
 Enter
 Sleep 1s
 Hide
-Sleep 15s
+Sleep 20s
 Show
 Sleep 5s
 
@@ -112,7 +112,7 @@ Type@110ms "Do you currently have any editor context? If the active file context
 Enter
 Sleep 1s
 Hide
-Sleep 15s
+Sleep 20s
 Show
 Sleep 5s
 
@@ -141,7 +141,7 @@ Type@110ms "What editor context can you see now? Include the active file and any
 Enter
 Sleep 1s
 Hide
-Sleep 15s
+Sleep 20s
 Show
 Sleep 5s
 

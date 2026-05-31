@@ -28,9 +28,13 @@ Type `vim.opt.runtimepath:prepend(os.getenv("AGENT_TERM_NVIM_REPO"))`
 Enter
 Type `require("agent_term").setup({`
 Enter
-Type `  agent = {`
+Type `  agents = {`
 Enter
-Type `    cmd = { "codex", "--model", "gpt-5.4-mini", "-c", [[model_reasoning_effort="low"]] },`
+Type `    codex = {`
+Enter
+Type `      cmd = { "codex", "--model", "gpt-5.4-mini", "-c", [[model_reasoning_effort="low"]] },`
+Enter
+Type `    },`
 Enter
 Type `  },`
 Enter
