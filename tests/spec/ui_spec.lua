@@ -93,4 +93,28 @@ describe("Given Agent Term UI views", function()
 		assert.is_nil(state.session("codex").panel_win)
 		assert.is_false(panel.focus("codex"))
 	end)
+
+	it(
+		"When external layout changes resize a side panel Then the configured width is restored",
+		function()
+			config.setup({
+				agents = {
+					codex = { preset = "codex" },
+				},
+				panel = {
+					position = "right",
+					width = 0.35,
+				},
+			})
+
+			local bufnr = track_buf(vim.api.nvim_create_buf(false, true))
+			local win = panel.open(bufnr, "codex")
+			local expected = math.max(1, math.floor(vim.o.columns * 0.35))
+
+			vim.api.nvim_win_set_width(win, math.max(1, expected - 10))
+			panel.reconcile_layout()
+
+			assert.are.equal(expected, vim.api.nvim_win_get_width(win))
+		end
+	)
 end)
