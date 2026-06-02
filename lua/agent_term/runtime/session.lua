@@ -61,6 +61,9 @@ function M.send(text)
 		return false
 	end
 	local session = state.session()
+	if not session then
+		return false
+	end
 	vim.api.nvim_chan_send(session.job_id, text)
 	return true
 end
@@ -82,7 +85,7 @@ function M.ensure_session(cmd, agent_name)
 	end
 
 	local agent = config.agent(agent_name)
-	local run_cmd = cmd or config.auto_resume_command(agent_name) or (agent and agent.cmd)
+	local run_cmd = cmd or config.auto_resume_command(agent_name) or agent.cmd
 	if not can_run_cmd(run_cmd) then
 		notify.error(("Agent command not found: %s"):format(command_name(run_cmd)))
 		return nil
@@ -131,12 +134,13 @@ end
 
 function M.close_all_views_except(agent_name)
 	state.each_session(function(name, session)
-		if name ~= agent_name then
-			close_win_if_valid(session.float_win)
-			close_win_if_valid(session.panel_win)
-			state.reset_float_win(name)
-			state.reset_panel_win(name)
+		if name == agent_name then
+			return
 		end
+		close_win_if_valid(session.float_win)
+		close_win_if_valid(session.panel_win)
+		state.reset_float_win(name)
+		state.reset_panel_win(name)
 	end)
 end
 

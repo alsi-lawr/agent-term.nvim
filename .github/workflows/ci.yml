@@ -31,6 +31,18 @@ jobs:
         with:
           args: lua tests
 
+      - name: Install LuaLS
+        env:
+          LUALS_VERSION: 3.18.1
+        run: |
+          curl -fsSL -o /tmp/lua-language-server.tar.gz "https://github.com/LuaLS/lua-language-server/releases/download/${LUALS_VERSION}/lua-language-server-${LUALS_VERSION}-linux-x64.tar.gz"
+          mkdir -p /tmp/lua-language-server
+          tar -C /tmp/lua-language-server -xzf /tmp/lua-language-server.tar.gz
+          echo "/tmp/lua-language-server/bin" >> "$GITHUB_PATH"
+
+      - name: Run LuaLS diagnostics
+        run: lua-language-server --check=. --checklevel=Warning --check_format=pretty --configpath=.luarc.ci.json
+
   test:
     name: Test
     runs-on: ubuntu-latest

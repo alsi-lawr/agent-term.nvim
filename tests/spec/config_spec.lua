@@ -219,6 +219,19 @@ describe("Given multi-agent configuration", function()
 		assert.is_true(#notifications >= 4)
 	end)
 
+	it("When config resolves to no agents Then setup notifies and fails", function()
+		local config = require("agent_term.setup.runtime_config")
+
+		assert.has_error(function()
+			config.setup({ agents = { "typo" } })
+		end, "agent-term.nvim config must define at least one valid agent.")
+		assert.match("Unknown agent preset `typo`", notifications[1].msg)
+		assert.are.equal(
+			"agent-term.nvim config must define at least one valid agent.",
+			notifications[#notifications].msg
+		)
+	end)
+
 	it("When active agent is switched Then it validates and persists the selection", function()
 		local config = require("agent_term.setup.runtime_config")
 		config.setup({

@@ -6,6 +6,7 @@ local schema = require("agent_term.setup.schema")
 local M = {}
 local CONTEXT_TARGET_DEFAULT = "default"
 
+---@type table<agent_term.SupportedAgent, agent_term.AgentPreset>
 M.agent_presets = {
 	codex = {
 		preset = "codex",
@@ -58,6 +59,7 @@ local auto_resume_args = {
 	},
 }
 
+---@type agent_term.ContextConfig
 local default_context = {
 	file_path = ".agent-term/context.json",
 	target_view = CONTEXT_TARGET_DEFAULT,
@@ -218,13 +220,22 @@ local function known_presets()
 end
 
 ---@param name string
----@return table<string, any>|nil
+---@return agent_term.AgentPreset|nil
 local function preset_by_name(name)
 	local preset = M.agent_presets[name]
 	if type(preset) ~= "table" then
 		return nil
 	end
 	return vim.deepcopy(preset)
+end
+
+---@param preset agent_term.AgentPreset
+---@return agent_term.UserAgentConfig
+local function preset_to_user_agent(preset)
+	return {
+		preset = preset.preset,
+		cmd = vim.deepcopy(preset.cmd),
+	}
 end
 
 ---@param name string
@@ -242,50 +253,83 @@ function M.auto_resume_args_for_preset(name, mode)
 	return vim.deepcopy(args)
 end
 
----@param agents table<string|integer, any>
+---@param agents agent_term.UserAgents
+---@param index integer
+---@param agent any
+local function normalize_list_agent(agents, index, agent)
+	if type(agent) ~= "string" then
+		warn_invalid("agents." .. index, "a preset string")
+		agents[index] = nil
+		return
+	end
+	if agents[agent] == nil then
+		agents[agent] = agent
+	end
+	agents[index] = nil
+end
+
+---@param agents agent_term.UserAgents
+---@param name string
+---@param preset_name string
+local function expand_preset_agent(agents, name, preset_name)
+	local preset = preset_by_name(preset_name)
+	if not preset then
+		notify.warn(
+			("Unknown agent preset `%s`. Supported presets: %s"):format(preset_name, known_presets())
+		)
+		agents[name] = nil
+		return
+	end
+	agents[name] = preset_to_user_agent(preset)
+end
+
+---@param agents agent_term.UserAgents
+---@param name string
+---@param agent table<string, any>
+local function expand_configured_agent_preset(agents, name, agent)
+	if type(agent.preset) ~= "string" then
+		return
+	end
+	local preset = preset_by_name(agent.preset)
+	if not preset then
+		notify.warn(
+			("Unknown agent preset `%s`. Supported presets: %s"):format(agent.preset, known_presets())
+		)
+		agent.preset = nil
+		return
+	end
+	agent.preset = nil
+	agents[name] = vim.tbl_deep_extend("force", preset, agent)
+end
+
+---@param agents agent_term.UserAgents
+---@param name string
+---@param agent any
+local function normalize_named_agent(agents, name, agent)
+	if type(agent) == "string" then
+		expand_preset_agent(agents, name, agent)
+		return
+	end
+	if type(agent) ~= "table" then
+		warn_invalid("agents." .. name, "a table or preset string")
+		agents[name] = nil
+		return
+	end
+	expand_configured_agent_preset(agents, name, agent)
+end
+
+---@param agents agent_term.UserAgents
 local function normalize_agents(agents)
 	for index, agent in ipairs(agents) do
-		if type(agent) == "string" then
-			if agents[agent] == nil then
-				agents[agent] = agent
-			end
-			agents[index] = nil
-		else
-			warn_invalid("agents." .. index, "a preset string")
-			agents[index] = nil
-		end
+		normalize_list_agent(agents, index, agent)
 	end
 
 	for name, agent in pairs(agents) do
-		if type(agent) == "string" then
-			local preset = preset_by_name(agent)
-			if preset then
-				agents[name] = preset
-			else
-				notify.warn(
-					("Unknown agent preset `%s`. Supported presets: %s"):format(agent, known_presets())
-				)
-				agents[name] = nil
-			end
-		elseif type(agent) == "table" and type(agent.preset) == "string" then
-			local preset = preset_by_name(agent.preset)
-			if preset then
-				agent.preset = nil
-				agents[name] = vim.tbl_deep_extend("force", preset, agent)
-			else
-				notify.warn(
-					("Unknown agent preset `%s`. Supported presets: %s"):format(agent.preset, known_presets())
-				)
-				agent.preset = nil
-			end
-		elseif type(agent) ~= "table" then
-			warn_invalid("agents." .. name, "a table or preset string")
-			agents[name] = nil
-		end
+		normalize_named_agent(agents, name, agent)
 	end
 end
 
----@param validated agent_term.Config
+---@param validated agent_term.UserConfig
 local function validate_top_level_keys(validated)
 	local unknown = schema.get_unknown_names(validated, is_known_name(known_top_level))
 	warn_and_strip(
@@ -314,31 +358,42 @@ local function validate_nested_section(section_opts, section, known)
 	)
 end
 
+---@param name string
+---@param agent any
+local function validate_agent_nested_keys(name, agent)
+	validate_nested_section(agent, "agents." .. name, known_agent)
+	if type(agent) ~= "table" then
+		return
+	end
+
+	validate_nested_section(agent.context, "agents." .. name .. ".context", known_nested.context)
+	if type(agent.context) ~= "table" or type(agent.context.hook) ~= "table" then
+		return
+	end
+
+	validate_nested_section(
+		agent.context.hook,
+		"agents." .. name .. ".context.hook",
+		known_context_hook
+	)
+end
+
 ---@param agents table<string, any>
-local function validate_agent_nested_keys(agents)
+local function validate_agents_nested_keys(agents)
 	for name, agent in pairs(agents) do
-		validate_nested_section(agent, "agents." .. name, known_agent)
-		if type(agent) == "table" then
-			validate_nested_section(agent.context, "agents." .. name .. ".context", known_nested.context)
-			if type(agent.context) == "table" and type(agent.context.hook) == "table" then
-				validate_nested_section(
-					agent.context.hook,
-					"agents." .. name .. ".context.hook",
-					known_context_hook
-				)
-			end
-		end
+		validate_agent_nested_keys(name, agent)
 	end
 end
 
----@param validated agent_term.Config
+---@param validated agent_term.UserConfig
 local function validate_nested_keys(validated)
 	for section, known in pairs(known_nested) do
 		validate_nested_section(validated[section], section, known)
 	end
-	if type(validated.agents) == "table" then
-		validate_agent_nested_keys(validated.agents)
+	if type(validated.agents) ~= "table" then
+		return
 	end
+	validate_agents_nested_keys(validated.agents)
 end
 
 ---@param value any
@@ -367,7 +422,7 @@ local function is_known_value(known)
 	end
 end
 
----@param validated agent_term.Config
+---@param validated agent_term.UserConfig
 local function validate_section_shapes(validated)
 	if validated.agents ~= nil and type(validated.agents) ~= "table" then
 		warn_invalid("agents", "a table")
@@ -393,6 +448,34 @@ local function validate_section_shapes(validated)
 	end
 end
 
+---@param context table<string, any>
+---@param path string
+local function validate_context_hook_values(context, path)
+	local hook = context.hook
+	if type(hook) ~= "table" then
+		return
+	end
+	strip_invalid_field(hook, "enabled", path .. ".hook.enabled", is_boolean, "a boolean")
+	if not is_empty_table(hook) then
+		return
+	end
+	context.hook = nil
+end
+
+---@param context table<string, any>
+---@param path string
+local function validate_context_include_values(context, path)
+	for _, key in ipairs({
+		"include_file_path",
+		"include_filetype",
+		"include_cursor",
+		"include_selection_range",
+		"include_diagnostics",
+	}) do
+		strip_invalid_field(context, key, path .. "." .. key, is_boolean, "a boolean")
+	end
+end
+
 ---@param context table<string, any>|nil
 ---@param path string
 local function validate_context_values(context, path)
@@ -410,21 +493,8 @@ local function validate_context_values(context, path)
 	strip_invalid_field(context, "hook", path .. ".hook", function(value)
 		return type(value) == "table"
 	end, "a table")
-	if type(context.hook) == "table" then
-		strip_invalid_field(context.hook, "enabled", path .. ".hook.enabled", is_boolean, "a boolean")
-		if is_empty_table(context.hook) then
-			context.hook = nil
-		end
-	end
-	for _, key in ipairs({
-		"include_file_path",
-		"include_filetype",
-		"include_cursor",
-		"include_selection_range",
-		"include_diagnostics",
-	}) do
-		strip_invalid_field(context, key, path .. "." .. key, is_boolean, "a boolean")
-	end
+	validate_context_hook_values(context, path)
+	validate_context_include_values(context, path)
 end
 
 ---@param agent table<string, any>
@@ -440,43 +510,72 @@ local function validate_agent_values(agent, path)
 	validate_context_values(agent.context, path .. ".context")
 end
 
----@param validated agent_term.Config
+---@param agent table<string, any>
+local function apply_preset_cmd(agent)
+	if agent.cmd ~= nil or type(agent.preset) ~= "string" then
+		return
+	end
+	local preset = preset_by_name(agent.preset)
+	if not preset then
+		return
+	end
+	agent.cmd = preset.cmd
+end
+
+---@param name string
+---@param agent any
+local function validate_agent_config_values(name, agent)
+	if type(agent) ~= "table" then
+		return
+	end
+	validate_agent_values(agent, "agents." .. name)
+	apply_preset_cmd(agent)
+end
+
+---@param agents table<string, any>
+local function validate_agents_values(agents)
+	for name, agent in pairs(agents) do
+		validate_agent_config_values(name, agent)
+	end
+end
+
+---@param float agent_term.UserFloatConfig
+local function validate_float_values(float)
+	strip_invalid_field(float, "width", "float.width", is_number, "a number")
+	strip_invalid_field(float, "height", "float.height", is_number, "a number")
+end
+
+---@param panel agent_term.UserPanelConfig
+local function validate_panel_values(panel)
+	strip_invalid_field(
+		panel,
+		"position",
+		"panel.position",
+		is_known_value(valid_panel_positions),
+		"`left`, `right`, or `bottom`"
+	)
+	strip_invalid_field(panel, "width", "panel.width", is_number, "a number")
+	strip_invalid_field(panel, "height", "panel.height", is_number, "a number")
+end
+
+---@param validated agent_term.UserConfig
 local function validate_option_values(validated)
 	validate_section_shapes(validated)
 
 	if type(validated.agents) == "table" then
-		for name, agent in pairs(validated.agents) do
-			if type(agent) == "table" then
-				validate_agent_values(agent, "agents." .. name)
-				if agent.cmd == nil and type(agent.preset) == "string" then
-					local preset = preset_by_name(agent.preset)
-					if preset then
-						agent.cmd = preset.cmd
-					end
-				end
-			end
-		end
+		validate_agents_values(validated.agents)
 	end
 
 	if type(validated.float) == "table" then
-		strip_invalid_field(validated.float, "width", "float.width", is_number, "a number")
-		strip_invalid_field(validated.float, "height", "float.height", is_number, "a number")
+		validate_float_values(validated.float)
 	end
 
 	if type(validated.panel) == "table" then
-		strip_invalid_field(
-			validated.panel,
-			"position",
-			"panel.position",
-			is_known_value(valid_panel_positions),
-			"`left`, `right`, or `bottom`"
-		)
-		strip_invalid_field(validated.panel, "width", "panel.width", is_number, "a number")
-		strip_invalid_field(validated.panel, "height", "panel.height", is_number, "a number")
+		validate_panel_values(validated.panel)
 	end
 end
 
----@param validated agent_term.Config
+---@param validated agent_term.UserConfig
 local function validate_keymap_names(validated)
 	if type(validated.keymaps) ~= "table" then
 		return
@@ -494,17 +593,15 @@ end
 ---@return string[]
 function M.agent_names(agents)
 	local names = {}
-	for name, _ in pairs(agents or {}) do
-		if type(name) == "string" then
-			names[#names + 1] = name
-		end
+	for name, _ in pairs(agents) do
+		names[#names + 1] = name
 	end
 	table.sort(names)
 	return names
 end
 
----@param user_opts agent_term.Config
----@return agent_term.Config
+---@param user_opts agent_term.UserConfig
+---@return agent_term.UserConfig
 function M.validate_schema(user_opts)
 	local validated = vim.deepcopy(user_opts)
 	validate_top_level_keys(validated)
@@ -518,8 +615,8 @@ function M.validate_schema(user_opts)
 	return validated
 end
 
----@param user_opts? agent_term.Config
----@return agent_term.Config
+---@param user_opts? agent_term.UserConfig
+---@return agent_term.ResolvedConfig
 function M.build_options(user_opts)
 	local validated = user_opts
 	if type(user_opts) == "table" then
@@ -529,6 +626,7 @@ function M.build_options(user_opts)
 	if type(validated) == "table" and type(validated.agents) == "table" then
 		defaults.agents = {}
 	end
+	---@type agent_term.ResolvedConfig
 	local options = vim.tbl_deep_extend("force", defaults, validated or {})
 	for _, agent in pairs(options.agents) do
 		agent.context = vim.tbl_deep_extend("force", vim.deepcopy(default_context), agent.context or {})

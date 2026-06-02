@@ -184,7 +184,7 @@ Supported enum values are available at `require("agent_term.enums").agent`.
   </tr>
   <tr>
     <td>Run checks locally</td>
-    <td><code>./run_tests.sh</code>, <code>stylua --check lua tests</code>, <code>luacheck lua tests</code></td>
+    <td><code>./run_tests.sh</code>, <code>stylua --check lua tests</code>, <code>luacheck lua tests</code>, <code>lua-language-server --check=. --checklevel=Warning --check_format=pretty --configpath=.luarc.ci.json</code></td>
     <td><a href="CONTRIBUTING.md">Contribution Guide</a></td>
   </tr>
 </table>

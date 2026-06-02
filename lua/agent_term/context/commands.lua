@@ -7,11 +7,28 @@ local view_controller = require("agent_term.ui.controller")
 
 local M = {}
 
+---@return boolean
 local function is_panel_focused()
 	local session = state.session()
 	return state.has_valid_panel_win()
-		and session
+		and session ~= nil
 		and vim.api.nvim_get_current_win() == session.panel_win
+end
+
+---@param sent boolean
+---@param used_hook boolean
+---@param hook_failure string|nil
+---@return boolean
+local function notify_send_failure(sent, used_hook, hook_failure)
+	if sent then
+		return false
+	end
+	if used_hook and hook_failure then
+		notify.error(("Failed to write agent hook context: %s"):format(hook_failure))
+		return true
+	end
+	notify.error("Agent session is not running.")
+	return true
 end
 
 ---@param kind "buffer"|"selection"|"diagnostics"
@@ -28,12 +45,7 @@ local function send_context(kind, builder)
 	end
 
 	local sent, used_hook, hook_failure = submission.submit(message, kind)
-	if not sent then
-		if used_hook and hook_failure then
-			notify.error(("Failed to write agent hook context: %s"):format(hook_failure))
-			return
-		end
-		notify.error("Agent session is not running.")
+	if notify_send_failure(sent, used_hook, hook_failure) then
 		return
 	end
 
@@ -50,7 +62,7 @@ function M.send_buffer_context()
 	end)
 end
 
----@param opts? vim.api.keyset.create_user_command.command_args
+---@param opts? table
 function M.send_selection_context(opts)
 	send_context("selection", function()
 		return captured_context.resolve_message("selection", function()

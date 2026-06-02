@@ -11,6 +11,7 @@ Prerequisites:
 - [`nvim-lua/plenary.nvim`](https://github.com/nvim-lua/plenary.nvim)
 - `stylua`
 - `luacheck`
+- `lua-language-server`
 - Any terminal-agent commands needed for manual testing
 
 If Plenary is not installed in a standard runtime path, set `PLENARY_PATH` when running tests.
@@ -82,13 +83,18 @@ Formatting and linting:
 ```sh
 stylua --check lua tests
 luacheck lua tests
+lua-language-server --check=. --checklevel=Warning --check_format=pretty --configpath=.luarc.ci.json
 ```
+
+LuaLS diagnostics run at warning level and are treated as a quality gate. The CI config checks
+source files and fails on poor annotations, unresolved nil handling, and type mismatches.
 
 Before opening a PR, run:
 
 ```sh
 stylua --check lua tests
 luacheck lua tests
+lua-language-server --check=. --checklevel=Warning --check_format=pretty --configpath=.luarc.ci.json
 ./run_tests.sh
 ```
 
@@ -125,9 +131,17 @@ PRs should include:
 - test evidence with command and result,
 - screenshots or gifs for UI-visible float or panel changes.
 
-Use conventional commit style for commits where practical, for example:
+Branch names should be scoped by intent, for example `feature/...`, `fix/...`, `refactor/...`,
+`docs/...`, `test/...`, or `ci/...`.
+
+Use Angular-style conventional commits. Commit scopes are optional; when used, they should name the
+project area being changed rather than the implementation language. Prefer scopes such as `config`,
+`runtime`, `context`, `ui`, `docs`, or `ci`; avoid broad scopes such as `lua`.
+
+Examples:
 
 - `feat(config): add agent preset`
-- `fix(context): preserve source buffer context`
+- `refactor(runtime): flatten session flow`
 - `test(nvim): cover panel focus behavior`
 - `docs(readme): simplify agent summary`
+- `ci(luals): add source diagnostics gate`
