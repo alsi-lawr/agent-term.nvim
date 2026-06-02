@@ -36,7 +36,7 @@ end
 
 function M.open(buf, agent_name)
 	local session = state.session(agent_name)
-	if state.has_valid_float_win(agent_name) then
+	if session and state.has_valid_float_win(agent_name) then
 		vim.api.nvim_set_current_win(session.float_win)
 		return session.float_win
 	end
@@ -60,7 +60,7 @@ end
 
 function M.close(agent_name)
 	local session = state.session(agent_name)
-	if not state.has_valid_float_win(agent_name) then
+	if not session or not state.has_valid_float_win(agent_name) then
 		state.reset_float_win(agent_name)
 		return
 	end
@@ -71,7 +71,7 @@ end
 
 function M.focus(agent_name)
 	local session = state.session(agent_name)
-	if not state.has_valid_float_win(agent_name) then
+	if not session or not state.has_valid_float_win(agent_name) then
 		return false
 	end
 

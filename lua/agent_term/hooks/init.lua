@@ -11,26 +11,11 @@ local installers = {
 }
 
 local function command_name()
-	local agent = config.agent()
-	local cmd = type(agent) == "table" and agent.cmd or nil
-	if type(cmd) ~= "table" or type(cmd[1]) ~= "string" then
-		return nil
-	end
-	return vim.fn.fnamemodify(cmd[1], ":t")
+	return vim.fn.fnamemodify(config.agent().cmd[1], ":t")
 end
 
 local function context_file_path()
-	local context_opts = config.context()
-	if type(context_opts) == "table" and type(context_opts.file_path) == "string" then
-		return context_opts.file_path
-	end
-	return ".agent-term/context.json"
-end
-
-local function auto_hook_enabled()
-	local context = config.context()
-	local hook = type(context) == "table" and context.hook or nil
-	return type(hook) == "table" and hook.enabled == true
+	return config.context().file_path
 end
 
 function M.install()
@@ -54,7 +39,6 @@ function M.install()
 	end
 
 	local context = config.context()
-	context.hook = context.hook or {}
 	context.hook.enabled = true
 
 	local msg
@@ -77,7 +61,7 @@ function M.detect()
 	local agent_name = command_name()
 	local installer = agent_name and installers[agent_name] or nil
 
-	if not auto_hook_enabled() then
+	if not config.auto_hook_enabled() then
 		return false
 	end
 
