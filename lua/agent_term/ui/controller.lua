@@ -78,15 +78,13 @@ end
 
 ---@return "float"|"panel"
 function M.resolve_context_view()
-	local context = config.context()
-	local target = context and context.target_view or CONTEXT_TARGET_DEFAULT
-	if target == CONTEXT_TARGET_DEFAULT then
-		if state.has_valid_panel_win() then
-			return enums.view.PANEL
-		end
-		return enums.view.FLOAT
+	local target = config.context().target_view
+	if
+		target == enums.view.PANEL or (target == CONTEXT_TARGET_DEFAULT and state.has_valid_panel_win())
+	then
+		return enums.view.PANEL
 	end
-	return target
+	return enums.view.FLOAT
 end
 
 ---@return boolean
@@ -95,6 +93,18 @@ function M.ensure_started_for_context()
 		return true
 	end
 	return M.open(M.resolve_context_view(), { enter_insert = false })
+end
+
+---@param previous string|nil
+---@param name string
+---@param view "float"|"panel"
+---@return boolean
+local function reopen_switched_view(previous, name, view)
+	if previous and previous ~= name then
+		terminal.close_views(previous)
+	end
+	terminal.close_all_views_except(name)
+	return M.open(view, { agent_name = name })
 end
 
 ---@param name? string
@@ -118,11 +128,7 @@ function M.switch_agent(name, opts)
 	end
 
 	if view then
-		if previous and previous ~= name then
-			terminal.close_views(previous)
-		end
-		terminal.close_all_views_except(name)
-		return M.open(view, { agent_name = name })
+		return reopen_switched_view(previous, name, view)
 	end
 
 	if opts.bang then

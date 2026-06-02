@@ -40,9 +40,7 @@ function M.setup_tracking()
 	vim.api.nvim_clear_autocmds({ group = augroup })
 	vim.api.nvim_create_autocmd({ "BufEnter", "WinEnter" }, {
 		group = augroup,
-		callback = function()
-			M.capture_current_editor_context()
-		end,
+		callback = M.capture_current_editor_context,
 	})
 	M.capture_current_editor_context()
 end

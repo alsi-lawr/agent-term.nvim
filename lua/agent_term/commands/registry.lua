@@ -56,9 +56,7 @@ function M.setup()
 		local opts = vim.tbl_extend("force", spec[4], {
 			desc = spec[3],
 		})
-		vim.api.nvim_create_user_command(spec[1], function(command_opts)
-			dispatch.get(spec[2])(command_opts)
-		end, opts)
+		vim.api.nvim_create_user_command(spec[1], dispatch.get(spec[2]), opts)
 	end
 end
 

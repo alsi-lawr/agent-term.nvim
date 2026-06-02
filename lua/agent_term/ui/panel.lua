@@ -60,7 +60,7 @@ vim.api.nvim_create_autocmd({ "WinResized", "VimResized", "WinNew", "BufWinEnter
 
 function M.open(buf, agent_name)
 	local session = state.session(agent_name)
-	if state.has_valid_panel_win(agent_name) then
+	if session and state.has_valid_panel_win(agent_name) then
 		vim.api.nvim_set_current_win(session.panel_win)
 		return session.panel_win
 	end
@@ -97,7 +97,7 @@ end
 
 function M.close(agent_name)
 	local session = state.session(agent_name)
-	if not state.has_valid_panel_win(agent_name) then
+	if not session or not state.has_valid_panel_win(agent_name) then
 		state.reset_panel_win(agent_name)
 		return
 	end
@@ -108,7 +108,7 @@ end
 
 function M.focus(agent_name)
 	local session = state.session(agent_name)
-	if not state.has_valid_panel_win(agent_name) then
+	if not session or not state.has_valid_panel_win(agent_name) then
 		return false
 	end
 
