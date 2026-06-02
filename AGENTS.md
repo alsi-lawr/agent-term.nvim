@@ -58,6 +58,9 @@
 - Formatting is defined by `.stylua.toml`:
   - tabs, width 2, max column 100, Unix line endings.
 - Linting is defined by `.luacheckrc`.
+- LuaLS diagnostics are defined by `.luarc.json` for editor use and `.luarc.ci.json` for CI. The
+  CI check runs at warning level and must fail on poor types, nil-flow issues, and annotation
+  mismatches in source files.
 - Module/file names use lowercase grouped paths, for example `runtime/session.lua`.
 - Prefer small modules with explicit `require(...)` boundaries.
 - Avoid compatibility wrappers, alias modules, and speculative abstractions.
@@ -84,14 +87,25 @@
   runtime paths.
 - `stylua --check lua tests`: formatting check.
 - `luacheck lua tests`: lint Lua source and specs.
+- `lua-language-server --check=. --checklevel=Warning --check_format=pretty --configpath=.luarc.ci.json`:
+  fail on LuaLS source diagnostics.
 - Optional direct test invocation:
   - `nvim --headless -u tests/minimal_init.lua -i NONE -c "PlenaryBustedDirectory tests/spec { minimal_init = 'tests/minimal_init.lua' }" -c "qa"`
 
 ## Commit And Pull Request Guidelines
 
-- Follow Angular-style conventional commits seen in history:
-  - `feat(config): ...`, `refactor(lua): ...`, `test(nvim): ...`, `docs(readme): ...`,
-    `chore(lua): ...`.
+- Branch names must be scoped by intent, for example `feature/...`, `fix/...`, `refactor/...`,
+  `docs/...`, `test/...`, or `ci/...`.
+- Follow Angular-style conventional commits.
+- Commit scopes are optional. When used, scopes must name the project area being changed, not the
+  implementation language. Prefer scopes such as `config`, `runtime`, `context`, `ui`, `docs`, or
+  `ci`; avoid broad scopes such as `lua`.
+- Examples:
+  - `feat(config): add agent preset`
+  - `refactor(runtime): flatten session flow`
+  - `test(config): cover invalid agent setup`
+  - `docs(readme): simplify agent summary`
+  - `ci(luals): add source diagnostics gate`
 - Keep commits atomic and scoped to one logical change.
 - PRs should include:
   - concise summary,
