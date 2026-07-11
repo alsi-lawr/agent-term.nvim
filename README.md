@@ -190,8 +190,9 @@ its terminal session.
 ## Float Window Hosts
 
 The built-in `native` host is the default. It uses Neovim's window API directly, has no optional UI
-dependency, and provides the agent-aware title, border highlights, and responsive sizing described
-by the shared float settings.
+dependency, and has a rounded border with a centered, agent-aware title. Its surface and border use
+the editor's base `Normal` highlight rather than the raised `NormalFloat` background. Responsive
+sizing is shared by both float hosts.
 
 Set `float.host = "snacks"` to use
 [`Snacks.win`](https://github.com/folke/snacks.nvim/blob/main/docs/win.md) for floating views:
