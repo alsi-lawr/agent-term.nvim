@@ -81,6 +81,7 @@ M.defaults = {
 	},
 	active_agent = nil,
 	float = {
+		host = enums.float_host.NATIVE,
 		width = 0.85,
 		height = 0.8,
 		border = "rounded",
@@ -110,6 +111,7 @@ local known_agent = {
 
 local known_nested = {
 	float = {
+		host = true,
 		width = true,
 		height = true,
 		border = true,
@@ -145,6 +147,11 @@ local valid_panel_positions = {
 	[enums.panel_position.LEFT] = true,
 	[enums.panel_position.RIGHT] = true,
 	[enums.panel_position.BOTTOM] = true,
+}
+
+local valid_float_hosts = {
+	[enums.float_host.NATIVE] = true,
+	[enums.float_host.SNACKS] = true,
 }
 
 local valid_auto_resume_modes = {
@@ -541,6 +548,13 @@ end
 
 ---@param float agent_term.UserFloatConfig
 local function validate_float_values(float)
+	strip_invalid_field(
+		float,
+		"host",
+		"float.host",
+		is_known_value(valid_float_hosts),
+		"`native` or `snacks`"
+	)
 	strip_invalid_field(float, "width", "float.width", is_number, "a number")
 	strip_invalid_field(float, "height", "float.height", is_number, "a number")
 end

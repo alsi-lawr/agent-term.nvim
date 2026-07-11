@@ -62,7 +62,9 @@ runtime agent switching, startup/kill helpers, and optional native hook installa
 
 ## Install
 
-With lazy.nvim:
+### lazy.nvim
+
+The native float host has no UI dependency:
 
 ```lua
 {
@@ -79,7 +81,68 @@ With lazy.nvim:
 }
 ```
 
-The `keys` block above is a lazy.nvim example. Plugin-managed keymaps are disabled by default.
+To use the Snacks float host, declare Snacks explicitly and select it in `opts`:
+
+```lua
+{
+  "alsi-lawr/agent-term.nvim",
+  main = "agent_term",
+  dependencies = {
+    { "folke/snacks.nvim", opts = {} },
+  },
+  opts = {
+    float = {
+      host = "snacks",
+    },
+  },
+}
+```
+
+The `keys` block in the native example is optional. Plugin-managed keymaps are disabled by default.
+
+### vim.pack
+
+Neovim 0.12's built-in package manager makes added plugins available before the next line runs. Add
+Snacks before Agent Term, then configure both in the same order:
+
+```lua
+vim.pack.add({
+  "https://github.com/folke/snacks.nvim",
+  "https://github.com/alsi-lawr/agent-term.nvim",
+})
+
+require("snacks").setup({})
+require("agent_term").setup({
+  float = {
+    host = "snacks",
+  },
+})
+```
+
+For the native host, omit the Snacks URL and setup call, and use `require("agent_term").setup({})`.
+
+### vim-plug
+
+Declare both plugins before `plug#end()`, which makes them visible to the Lua setup that follows:
+
+```vim
+call plug#begin()
+Plug 'folke/snacks.nvim'
+Plug 'alsi-lawr/agent-term.nvim'
+call plug#end()
+
+lua << EOF
+require("snacks").setup({})
+require("agent_term").setup({
+  float = {
+    host = "snacks",
+  },
+})
+EOF
+```
+
+Run `:PlugInstall` after adding the declarations. For the native host, omit the Snacks declaration
+and setup call, and configure Agent Term without `float.host = "snacks"`.
 
 ## Minimal Configuration
 
@@ -123,6 +186,35 @@ normal switching never kills unrelated agents.
 
 Per-agent `preset`, `cmd`, `auto_resume`, and `context` settings are applied when that agent creates
 its terminal session.
+
+## Float Window Hosts
+
+The built-in `native` host is the default. It uses Neovim's window API directly, has no optional UI
+dependency, and provides the agent-aware title, border highlights, and responsive sizing described
+by the shared float settings.
+
+Set `float.host = "snacks"` to use
+[`Snacks.win`](https://github.com/folke/snacks.nvim/blob/main/docs/win.md) for floating views:
+
+```lua
+require("agent_term").setup({
+  float = {
+    host = "snacks",
+    width = 0.85,
+    height = 0.8,
+    border = "rounded",
+  },
+})
+```
+
+The Snacks host adds its backdrop and window lifecycle while wrapping Agent Term's existing terminal
+buffer. Agent Term continues to own agent processes, resume behavior, switching, and terminal
+session state. `float.width`, `float.height`, and `float.border` retain the same meaning under either
+host, and panels always use the native implementation.
+
+`snacks.nvim` is optional and is not loaded by native configurations. If the Snacks host is selected
+but Snacks cannot be loaded, Agent Term warns once when resolving the float host and uses the native
+host for the current Neovim run while that host selection remains unchanged.
 
 ## Agent Presets
 

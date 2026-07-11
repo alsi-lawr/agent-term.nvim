@@ -19,7 +19,8 @@ end
 ---@return boolean
 function M.open(view, opts)
 	opts = opts or {}
-	local agent_name = opts.agent_name or config.active_agent
+	local agent_name =
+		assert(opts.agent_name or config.active_agent, "agent-term.nvim active agent is not configured")
 	captured_context.capture_before_view_switch()
 	local buf = terminal.ensure_session(nil, agent_name)
 	if not buf then
