@@ -96,6 +96,9 @@ Float keys:
   `height`  Proportion (0, 1] of editor height or row count; default: 0.8
   `border`  Neovim floating-window border; default: "rounded"
 
+The native float has a rounded border and centered agent-aware title by
+default. Its surface and border use the editor's base `Normal` highlight.
+
 The Snacks host is optional and applies only to floats; panels always remain
 native. If `host = "snacks"` cannot load snacks.nvim, Agent Term warns and
 caches the native fallback for the current Neovim run while the configured

@@ -50,6 +50,7 @@ describe("Given multi-agent configuration", function()
 		assert.are.equal("codex", config.active_agent)
 		assert.is_false(opts.agents.codex.context.hook.enabled)
 		assert.are.equal("native", opts.float.host)
+		assert.are.equal("rounded", opts.float.border)
 		assert.is_false(opts.keymaps)
 	end)
 

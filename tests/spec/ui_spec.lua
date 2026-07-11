@@ -75,27 +75,29 @@ describe("Given Agent Term UI views", function()
 		assert.are.equal(gemini, state.session("gemini").float_win)
 	end)
 
-	it("When opening the native float Then its title and highlights identify the agent", function()
+	it("When opening the native float Then its rounded frame and title identify the agent", function()
 		local bufnr = track_buf(vim.api.nvim_create_buf(false, true))
 		local win = float.open(bufnr, "codex")
 		local win_config = vim.api.nvim_win_get_config(win)
 		local window_highlights = vim.api.nvim_get_option_value("winhighlight", { win = win })
 
+		assert.are.equal("rounded", config.options.float.border)
+		assert.are.same({ "╭", "─", "╮", "│", "╯", "─", "╰", "│" }, win_config.border)
 		assert.are.same({ { " Agent Term · codex ", "AgentTermFloatTitle" } }, win_config.title)
 		assert.are.equal("center", win_config.title_pos)
 		assert.matches("Normal:AgentTermFloat", window_highlights, 1, true)
 		assert.matches("FloatBorder:AgentTermFloatBorder", window_highlights, 1, true)
 		assert.matches("FloatTitle:AgentTermFloatTitle", window_highlights, 1, true)
 		assert.are.equal(
-			"NormalFloat",
+			"Normal",
 			vim.api.nvim_get_hl(0, { name = "AgentTermFloat", link = true }).link
 		)
 		assert.are.equal(
-			"FloatBorder",
+			"Normal",
 			vim.api.nvim_get_hl(0, { name = "AgentTermFloatBorder", link = true }).link
 		)
 		assert.are.equal(
-			"FloatTitle",
+			"Title",
 			vim.api.nvim_get_hl(0, { name = "AgentTermFloatTitle", link = true }).link
 		)
 	end)

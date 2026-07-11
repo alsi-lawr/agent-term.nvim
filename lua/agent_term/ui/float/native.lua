@@ -12,9 +12,9 @@ local winhighlight = table.concat({
 }, ",")
 
 local function apply_default_highlights()
-	vim.api.nvim_set_hl(0, "AgentTermFloat", { default = true, link = "NormalFloat" })
-	vim.api.nvim_set_hl(0, "AgentTermFloatBorder", { default = true, link = "FloatBorder" })
-	vim.api.nvim_set_hl(0, "AgentTermFloatTitle", { default = true, link = "FloatTitle" })
+	vim.api.nvim_set_hl(0, "AgentTermFloat", { default = true, link = "Normal" })
+	vim.api.nvim_set_hl(0, "AgentTermFloatBorder", { default = true, link = "Normal" })
+	vim.api.nvim_set_hl(0, "AgentTermFloatTitle", { default = true, link = "Title" })
 end
 
 apply_default_highlights()
