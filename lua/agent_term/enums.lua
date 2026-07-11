@@ -5,6 +5,11 @@ M.view = {
 	PANEL = "panel",
 }
 
+M.float_host = {
+	NATIVE = "native",
+	SNACKS = "snacks",
+}
+
 M.panel_position = {
 	LEFT = "left",
 	RIGHT = "right",

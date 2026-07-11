@@ -48,11 +48,13 @@ local M = {}
 ---@field cmd string[]
 
 ---@class agent_term.UserFloatConfig
+---@field host? "native"|"snacks"
 ---@field width? number
 ---@field height? number
 ---@field border? string|table
 
 ---@class agent_term.FloatConfig
+---@field host "native"|"snacks"
 ---@field width number
 ---@field height number
 ---@field border string|table

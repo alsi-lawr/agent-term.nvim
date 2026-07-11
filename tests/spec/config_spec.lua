@@ -49,7 +49,18 @@ describe("Given multi-agent configuration", function()
 		assert.are.equal("codex", opts.agents.codex.preset)
 		assert.are.equal("codex", config.active_agent)
 		assert.is_false(opts.agents.codex.context.hook.enabled)
+		assert.are.equal("native", opts.float.host)
 		assert.is_false(opts.keymaps)
+	end)
+
+	it("When an invalid float host is configured Then the native host remains active", function()
+		local config = require("agent_term.setup.runtime_config")
+		local opts = config.setup({
+			float = { host = "popup" },
+		})
+
+		assert.are.equal("native", opts.float.host)
+		assert.match("Invalid agent%-term%.nvim config `float.host` ignored", notifications[1].msg)
 	end)
 
 	it(

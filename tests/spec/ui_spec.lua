@@ -6,6 +6,8 @@ describe("Given Agent Term UI views", function()
 	local float
 	local panel
 	local bufs_to_delete = {}
+	local original_columns
+	local original_lines
 
 	local function track_buf(bufnr)
 		bufs_to_delete[#bufs_to_delete + 1] = bufnr
@@ -19,6 +21,8 @@ describe("Given Agent Term UI views", function()
 	end
 
 	before_each(function()
+		original_columns = vim.o.columns
+		original_lines = vim.o.lines
 		reload.clear_agent_term_modules()
 		config = require("agent_term.setup.runtime_config")
 		config.setup({
@@ -46,6 +50,8 @@ describe("Given Agent Term UI views", function()
 			end
 		end
 		bufs_to_delete = {}
+		vim.o.columns = original_columns
+		vim.o.lines = original_lines
 		reload.clear_agent_term_modules()
 	end)
 
@@ -67,6 +73,58 @@ describe("Given Agent Term UI views", function()
 		float.close("codex")
 		assert.is_nil(state.session("codex").float_win)
 		assert.are.equal(gemini, state.session("gemini").float_win)
+	end)
+
+	it("When opening the native float Then its title and highlights identify the agent", function()
+		local bufnr = track_buf(vim.api.nvim_create_buf(false, true))
+		local win = float.open(bufnr, "codex")
+		local win_config = vim.api.nvim_win_get_config(win)
+		local window_highlights = vim.api.nvim_get_option_value("winhighlight", { win = win })
+
+		assert.are.same({ { " Agent Term · codex ", "AgentTermFloatTitle" } }, win_config.title)
+		assert.are.equal("center", win_config.title_pos)
+		assert.matches("Normal:AgentTermFloat", window_highlights, 1, true)
+		assert.matches("FloatBorder:AgentTermFloatBorder", window_highlights, 1, true)
+		assert.matches("FloatTitle:AgentTermFloatTitle", window_highlights, 1, true)
+		assert.are.equal(
+			"NormalFloat",
+			vim.api.nvim_get_hl(0, { name = "AgentTermFloat", link = true }).link
+		)
+		assert.are.equal(
+			"FloatBorder",
+			vim.api.nvim_get_hl(0, { name = "AgentTermFloatBorder", link = true }).link
+		)
+		assert.are.equal(
+			"FloatTitle",
+			vim.api.nvim_get_hl(0, { name = "AgentTermFloatTitle", link = true }).link
+		)
+	end)
+
+	it("When Neovim dimensions change Then the native float is resized and recentered", function()
+		config.setup({
+			agents = {
+				codex = { preset = "codex" },
+			},
+			float = {
+				width = 0.5,
+				height = 0.5,
+			},
+		})
+
+		local bufnr = track_buf(vim.api.nvim_create_buf(false, true))
+		local win = float.open(bufnr, "codex")
+		vim.o.columns = original_columns + 20
+		vim.o.lines = original_lines + 10
+
+		float.reconcile_layout()
+
+		local win_config = vim.api.nvim_win_get_config(win)
+		local expected_width = math.floor(vim.o.columns * 0.5)
+		local expected_height = math.floor(vim.o.lines * 0.5)
+		assert.are.equal(expected_width, win_config.width)
+		assert.are.equal(expected_height, win_config.height)
+		assert.are.equal(math.floor((vim.o.lines - expected_height) / 2), win_config.row)
+		assert.are.equal(math.floor((vim.o.columns - expected_width) / 2), win_config.col)
 	end)
 
 	it("When opening and closing the panel Then focus and lifecycle state stay per agent", function()
