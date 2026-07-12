@@ -1,7 +1,9 @@
+<div align="center">
+
 # agent-term.nvim
 
 <p align="center">
-  <img src="docs/assets/demo.gif" alt="agent-term.nvim demo" width="900" />
+  <img src="docs/assets/demo.webp" alt="agent-term.nvim demo" width="900" />
 </p>
 
 <p align="center">
@@ -15,6 +17,7 @@
 <p align="center">
   Each configured agent gets its own persistent terminal session. Switching agents changes the active view without killing unrelated sessions.
 </p>
+</div>
 
 <p align="center">
   <a href="#install">Install</a> ·
@@ -181,7 +184,7 @@ agent names only. `:AgentTermSwitch! <name>` kills and recreates only the target
 normal switching never kills unrelated agents.
 
 <p align="center">
-  <img src="docs/assets/agent-switching-demo.gif" alt="agent-term.nvim switching between Codex and agy agents" width="900" />
+  <img src="docs/assets/agent-switching-demo.webp" alt="agent-term.nvim switching between Codex and agy agents" width="900" />
 </p>
 
 Per-agent `preset`, `cmd`, `auto_resume`, and `context` settings are applied when that agent creates
@@ -304,7 +307,7 @@ available:
 The plugin manages repo-level state in the `.agent-term/` directory by default.
 
 <p align="center">
-  <img src="docs/assets/context-retrieval-demo.gif" alt="agent-term.nvim automatic hook context retrieval demo" width="900" />
+  <img src="docs/assets/context-retrieval-demo.webp" alt="agent-term.nvim automatic hook context retrieval demo" width="900" />
 </p>
 
 ### Context Transport
