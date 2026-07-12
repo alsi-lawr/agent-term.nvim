@@ -1,67 +1,56 @@
 Output docs/assets/demo.gif
 
-Set Shell "bash"
-Set FontSize 14
-Set Width 1200
-Set Height 720
-Set Padding 20
-Set Framerate 10 
-Set PlaybackSpeed 1.0
+Set Shell "zsh"
+
+Set Theme { "name": "Tomorrow Night Framed", "black": "#000000", "red": "#cc6666", "green": "#b5bd68", "yellow": "#f0c674", "blue": "#81a2be", "magenta": "#b294bb", "cyan": "#8abeb7", "white": "#c5c8c6", "brightBlack": "#666666", "brightRed": "#d54e53", "brightGreen": "#b9ca4a", "brightYellow": "#e7c547", "brightBlue": "#7aa6da", "brightMagenta": "#c397d8", "brightCyan": "#70c0b1", "brightWhite": "#eaeaea", "background": "#34363c", "foreground": "#c5c8c6", "selection": "#51545c", "cursor": "#c5c8c6" }
+Set WindowBar ColorfulRight
+Set WindowBarSize 16
+
+Set FontFamily "MesloLGS Nerd Font"
+Set FontSize 12
+
+Set Width 1600
+Set Height 900
+Set BorderRadius 9
+Set Padding 0
+
+Set Framerate 15
+Set PlaybackSpeed 1.5
 Set TypingSpeed 5ms
-Set Theme "Catppuccin Mocha"
+Set CursorBlink false
 
 Hide
 Type "clear"
 Enter
 
-Type `export AGENT_TERM_NVIM_REPO="$PWD"`
-Enter
 Type "rm -rf /tmp/agent-term-nvim-vhs-demo && mkdir -p /tmp/agent-term-nvim-vhs-demo"
 Enter
 Type "cd /tmp/agent-term-nvim-vhs-demo"
 Enter
 Type `printf '%s\n' 'local function greet(name)' '  return "Hello, " .. (name or "stranger")' 'end' '' 'print(greet("Agent Term"))' > demo.lua`
 Enter
-Type "cat > init.lua <<'EOF'"
+Type `printf '%s\n' '{"workspace":{"ignoreDir":["**"],"checkThirdParty":false}}' > .luarc.json`
 Enter
-Type `vim.opt.runtimepath:prepend(os.getenv("AGENT_TERM_NVIM_REPO"))`
+# Pre-accept agy trust prompt for this disposable demo directory.
+Type "agy"
 Enter
-Type `require("agent_term").setup({`
+Sleep 9s
 Enter
-Type `  agents = {`
-Enter
-Type `    codex = {`
-Enter
-Type `      cmd = { "codex", "--model", "gpt-5.4-mini", "-c", [[model_reasoning_effort="low"]] },`
-Enter
-Type `    },`
-Enter
-Type `  },`
-Enter
-Type `})`
-Enter
-Type `vim.keymap.set("t", "<Esc>", [[<C-\><C-n>]], { silent = true })`
-Enter
-Type "EOF"
-Enter
-
-# Pre-accept Codex trust prompt for this disposable demo directory.
-Type `codex --model gpt-5.4-mini -c 'model_reasoning_effort=\"low\"'`
-Enter
-Sleep 3s
-Type "y"
-Enter
-Sleep 1.5s
+Sleep 5s
 Type@90ms "/quit"
 Enter
-Sleep 1.5s
+Sleep 500ms
 
 Type "clear"
 Enter
-Sleep 1.5s
+Sleep 2s
+
+Type@90ms "nvim -u ~/.config/nvim/init.lua demo.lua"
+Enter
+Sleep 8s
 Show
 
-Type@90ms "nvim -u init.lua demo.lua"
+Type@90ms ":AgentTermSwitch agy"
 Enter
 Sleep 2s
 
@@ -69,7 +58,7 @@ Type@90ms ":AgentTermFloatOpen"
 Enter
 Sleep 4s
 
-Type@110ms "Briefly explain what this project does. Do not edit files."
+Type@80ms "Briefly explain what this project does. Do not edit files."
 Enter
 Sleep 1s
 Hide
@@ -77,8 +66,9 @@ Sleep 5s
 Show
 Sleep 5s
 
-Escape
-Sleep 700ms
+Ctrl+\
+Ctrl+n
+Sleep 1s
 
 Type@90ms ":AgentTermFloatClose"
 Enter
@@ -88,8 +78,9 @@ Type@90ms ":AgentTermPanelOpen"
 Enter
 Sleep 3s
 
-Escape
-Sleep 700ms
+Ctrl+\
+Ctrl+n
+Sleep 1s
 
 Type@90ms ":AgentTermSendBufferContext"
 Enter
@@ -103,8 +94,9 @@ Type@90ms ":AgentTermFloatOpen"
 Enter
 Sleep 3s
 
-Escape
-Sleep 700ms
+Ctrl+\
+Ctrl+n
+Sleep 1s
 
 Type@90ms ":AgentTermClose"
 Enter
