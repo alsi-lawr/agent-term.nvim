@@ -77,14 +77,17 @@ function M.is_installed(opts)
 
 	local handlers = read_preinvocation(data)
 	local hook = {
-		command = ("python3 %s %s"):format(shell_quoted(script_path), shell_quoted(opts.context_file_path)),
+		command = ("python3 %s %s"):format(
+			shell_quoted(script_path),
+			shell_quoted(opts.context_file_path)
+		),
 		timeout = 10,
 	}
 	return has_preinvocation_handler(handlers, hook)
 end
 
 ---@param opts { context_file_path: string }
----@return boolean ok, { files: string[] }|string? result
+---@return boolean ok, { files: string[], changed: boolean }|string? result
 function M.install(opts)
 	local hooks_json = vim.fn.expand("~/.gemini/config/hooks.json")
 	local script_path = vim.fn.expand("~/.gemini/config/hooks/agent_term_context.py")
@@ -100,7 +103,10 @@ function M.install(opts)
 	end
 
 	local hook = {
-		command = ("python3 %s %s"):format(shell_quoted(script_path), shell_quoted(opts.context_file_path)),
+		command = ("python3 %s %s"):format(
+			shell_quoted(script_path),
+			shell_quoted(opts.context_file_path)
+		),
 		timeout = 10,
 	}
 

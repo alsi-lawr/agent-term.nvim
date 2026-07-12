@@ -116,9 +116,9 @@ describe("Given multi-agent configuration", function()
 		assert.are.equal("codex", opts.agents.codex.preset)
 		assert.are.same({ "agy" }, opts.agents.agy.cmd)
 		assert.are.equal("last", opts.agents.agy.auto_resume)
-			assert.is_nil(opts.agents[1])
-			assert.is_nil(opts.agents[2])
-			assert.are.same({ "agy", "claude", "codex" }, config.agent_names())
+		assert.is_nil(opts.agents[1])
+		assert.is_nil(opts.agents[2])
+		assert.are.same({ "agy", "claude", "codex" }, config.agent_names())
 	end)
 
 	it("When preset list entries duplicate named agents Then explicit named config wins", function()
@@ -180,7 +180,7 @@ describe("Given multi-agent configuration", function()
 			},
 		})
 
-			assert.are.equal("agy", config.active_agent)
+		assert.are.equal("agy", config.active_agent)
 		assert.are.equal(1, #notifications)
 		assert.match("Persisted active agent `missing` is no longer configured", notifications[1].msg)
 	end)
@@ -277,8 +277,8 @@ describe("Given multi-agent configuration", function()
 			return 0
 		end
 
-			assert.is_false(config.set_active_agent("agy"))
-			assert.are.equal("agy", config.active_agent)
+		assert.is_false(config.set_active_agent("agy"))
+		assert.are.equal("agy", config.active_agent)
 		assert.are.equal(0, vim.fn.filereadable(state_file()))
 		assert.match("Agent command not found: agy", notifications[#notifications].msg)
 

@@ -102,25 +102,22 @@ describe("Given native agent hook installation", function()
 		end
 	)
 
-	it(
-		"When AgentTermInstallHooks runs for agy Then it installs PreInvocation hooks",
-		function()
-			local plugin = require("agent_term")
-			local hooks = require("agent_term.hooks")
-			plugin.setup({ agents = { agy = { preset = "agy" } } })
+	it("When AgentTermInstallHooks runs for agy Then it installs PreInvocation hooks", function()
+		local plugin = require("agent_term")
+		local hooks = require("agent_term.hooks")
+		plugin.setup({ agents = { agy = { preset = "agy" } } })
 
-			assert.is_true(hooks.install())
-			assert.are.equal(1, vim.fn.filereadable(path(".gemini/config/hooks.json")))
-			assert.are.equal(1, vim.fn.filereadable(path(".gemini/config/hooks/agent_term_context.py")))
-			assert.is_true(require("agent_term.setup.runtime_config").context().hook.enabled)
+		assert.is_true(hooks.install())
+		assert.are.equal(1, vim.fn.filereadable(path(".gemini/config/hooks.json")))
+		assert.are.equal(1, vim.fn.filereadable(path(".gemini/config/hooks/agent_term_context.py")))
+		assert.is_true(require("agent_term.setup.runtime_config").context().hook.enabled)
 
-			local hooks_config = read_json(path(".gemini/config/hooks.json"))
-			local handlers = hooks_config.hooks.PreInvocation
-			assert.is_not_nil(handlers)
-			assert.is_not_nil(handlers[1].command:match("%.gemini/config/hooks/agent_term_context%.py"))
-			assert.is_not_nil(handlers[1].command:match("%-term/context%.json"))
-		end
-	)
+		local hooks_config = read_json(path(".gemini/config/hooks.json"))
+		local handlers = hooks_config.hooks.PreInvocation
+		assert.is_not_nil(handlers)
+		assert.is_not_nil(handlers[1].command:match("%.gemini/config/hooks/agent_term_context%.py"))
+		assert.is_not_nil(handlers[1].command:match("%-term/context%.json"))
+	end)
 
 	it(
 		"When the installed agy context script runs Then it emits PreInvocation injectSteps",
@@ -142,7 +139,7 @@ describe("Given native agent hook installation", function()
 				"python3",
 				path(".gemini/config/hooks/agent_term_context.py"),
 				path(".agent-term/context.json"),
-				"{\"invocationNum\":0}",
+				'{"invocationNum":0}',
 			})
 
 			assert.are.equal(0, vim.v.shell_error)
