@@ -48,9 +48,10 @@ describe("Given runtime agent switching", function()
 	local function setup_plugin()
 		local plugin = require("agent_term")
 		plugin.setup({
+			active_agent = "codex",
 			agents = {
 				codex = { cmd = { "codex" } },
-				gemini = { cmd = { "gemini" } },
+				agy = { cmd = { "agy" } },
 			},
 		})
 		return plugin
@@ -68,14 +69,14 @@ describe("Given runtime agent switching", function()
 	it("When AgentTermSwitch is called with an agent Then it switches and persists", function()
 		setup_plugin()
 		vim.fn.executable = function(exe)
-			return exe == "gemini" and 1 or 0
+			return exe == "agy" and 1 or 0
 		end
 
-		vim.cmd("AgentTermSwitch gemini")
+		vim.cmd("AgentTermSwitch agy")
 
 		local config = require("agent_term.setup.runtime_config")
-		assert.are.equal("gemini", config.active_agent)
-		assert.are.same({ "gemini" }, vim.fn.readfile(state_file()))
+		assert.are.equal("agy", config.active_agent)
+		assert.are.same({ "agy" }, vim.fn.readfile(state_file()))
 	end)
 
 	it("When completing AgentTermSwitch Then only configured agent names are returned", function()
@@ -83,7 +84,7 @@ describe("Given runtime agent switching", function()
 
 		local completion = vim.fn.getcompletion("AgentTermSwitch ", "cmdline")
 
-		assert.are.same({ "codex", "gemini" }, completion)
+		assert.are.same({ "agy", "codex" }, completion)
 	end)
 
 	it(
@@ -105,14 +106,14 @@ describe("Given runtime agent switching", function()
 			vim.cmd.AgentTermPanelOpen()
 			local state = require("agent_term.runtime.state")
 			local codex_win = state.session("codex").panel_win
-			vim.cmd("AgentTermSwitch gemini")
+			vim.cmd("AgentTermSwitch agy")
 
 			assert.is_false(vim.api.nvim_win_is_valid(codex_win))
-			assert.is_true(vim.api.nvim_win_is_valid(state.session("gemini").panel_win))
+			assert.is_true(vim.api.nvim_win_is_valid(state.session("agy").panel_win))
 			assert.are.same({ "codex" }, starts[1])
-			assert.are.same({ "gemini" }, starts[2])
+			assert.are.same({ "agy" }, starts[2])
 			assert.are.equal(301, state.session("codex").job_id)
-			assert.are.equal(302, state.session("gemini").job_id)
+			assert.are.equal(302, state.session("agy").job_id)
 		end
 	)
 
@@ -133,13 +134,13 @@ describe("Given runtime agent switching", function()
 			end
 
 			vim.cmd.AgentTermFloatOpen()
-			vim.cmd("AgentTermSwitch gemini")
+			vim.cmd("AgentTermSwitch agy")
 			vim.cmd("AgentTermSwitch codex")
 
 			local state = require("agent_term.runtime.state")
 			assert.are.equal(2, #starts)
 			assert.are.equal(401, state.session("codex").job_id)
-			assert.are.equal(402, state.session("gemini").job_id)
+			assert.are.equal(402, state.session("agy").job_id)
 		end
 	)
 
@@ -163,13 +164,13 @@ describe("Given runtime agent switching", function()
 		end
 
 		vim.cmd.AgentTermFloatOpen()
-		vim.cmd("AgentTermSwitch gemini")
+		vim.cmd("AgentTermSwitch agy")
 		vim.cmd("AgentTermSwitch! codex")
 
 		local state = require("agent_term.runtime.state")
 		assert.are.same({ 501 }, stopped)
 		assert.are.equal(503, state.session("codex").job_id)
-		assert.are.equal(502, state.session("gemini").job_id)
+		assert.are.equal(502, state.session("agy").job_id)
 	end)
 
 	it(

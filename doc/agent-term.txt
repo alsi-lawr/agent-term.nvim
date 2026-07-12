@@ -16,7 +16,7 @@ CONTENTS                                                    *agent-term-contents
 REQUIREMENTS                                              *agent-term-requirements*
 
 - Neovim 0.12+
-- An installed terminal coding agent (for example: codex, claude, gemini)
+- An installed terminal coding agent (for example: codex, claude, agy)
 
 SETUP                                                            *agent-term-setup*
 
@@ -35,9 +35,9 @@ Basic multi-agent setup:
     agents = {
       "claude",
       "codex",
-      gemini = {
-        preset = "gemini",
-        cmd = { "gemini" },
+      agy = {
+        preset = "agy",
+        cmd = { "agy" },
       },
       custom = {
         cmd = { "my-agent" },
@@ -106,7 +106,7 @@ host remains unchanged.
 
 Agent keys:
 
-  `preset`       "codex" | "gemini" | "claude" | "aider" | "copilot" | "opencode"
+  `preset`       "codex" | "agy" | "claude" | "aider" | "copilot" | "opencode"
   `cmd`          Command list, for example `{ "codex" }`
   `auto_resume`  false | nil | "picker" | "last"
   `context`      Per-agent context and hook behavior
@@ -137,7 +137,7 @@ context payloads to `agents.<name>.context.file_path` for supported native
 agent hooks.
 
 Run `:AgentTermInstallHooks` to install supported native hooks for the active
-agent. Codex, Claude, and Gemini have installers. Unsupported agents warn and
+agent. Codex, Claude, and agy have installers. Unsupported agents warn and
 continue using paste mode.
 
 LUA API                                                          *agent-term-api*
@@ -147,7 +147,7 @@ LUA API                                                          *agent-term-api
 
   agent_term.setup(opts)
   agent_term.get_active_agent()
-  agent_term.set_active_agent("gemini")
+  agent_term.set_active_agent("agy")
   agent_term.set_active_agent("codex", { bang = true })
 <
 

@@ -21,7 +21,7 @@ local M = {}
 
 ---@alias agent_term.SupportedAgent
 ---| "codex"
----| "gemini"
+---| "agy"
 ---| "claude"
 ---| "aider"
 ---| "copilot"

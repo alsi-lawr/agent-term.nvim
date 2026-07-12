@@ -76,8 +76,8 @@ describe("Given multi-agent configuration", function()
 						auto_resume = "last",
 						context = { hook = { enabled = true } },
 					},
-					gemini = {
-						preset = "gemini",
+					agy = {
+						preset = "agy",
 						context = { include_cursor = false },
 					},
 					custom = {
@@ -89,9 +89,9 @@ describe("Given multi-agent configuration", function()
 			assert.are.same({ "codex", "--model", "gpt-5.4-mini" }, opts.agents.codex.cmd)
 			assert.are.equal("last", opts.agents.codex.auto_resume)
 			assert.is_true(opts.agents.codex.context.hook.enabled)
-			assert.are.same({ "gemini" }, opts.agents.gemini.cmd)
-			assert.is_false(opts.agents.gemini.context.include_cursor)
-			assert.is_true(opts.agents.gemini.context.include_file_path)
+			assert.are.same({ "agy" }, opts.agents.agy.cmd)
+			assert.is_false(opts.agents.agy.context.include_cursor)
+			assert.is_true(opts.agents.agy.context.include_file_path)
 			assert.are.same({ "my-agent" }, opts.agents.custom.cmd)
 			assert.is_nil(opts.agents.custom.preset)
 		end
@@ -103,8 +103,8 @@ describe("Given multi-agent configuration", function()
 			agents = {
 				"claude",
 				"codex",
-				gemini = {
-					preset = "gemini",
+				agy = {
+					preset = "agy",
 					auto_resume = "last",
 				},
 			},
@@ -114,26 +114,26 @@ describe("Given multi-agent configuration", function()
 		assert.are.equal("claude", opts.agents.claude.preset)
 		assert.are.same({ "codex" }, opts.agents.codex.cmd)
 		assert.are.equal("codex", opts.agents.codex.preset)
-		assert.are.same({ "gemini" }, opts.agents.gemini.cmd)
-		assert.are.equal("last", opts.agents.gemini.auto_resume)
-		assert.is_nil(opts.agents[1])
-		assert.is_nil(opts.agents[2])
-		assert.are.same({ "claude", "codex", "gemini" }, config.agent_names())
+		assert.are.same({ "agy" }, opts.agents.agy.cmd)
+		assert.are.equal("last", opts.agents.agy.auto_resume)
+			assert.is_nil(opts.agents[1])
+			assert.is_nil(opts.agents[2])
+			assert.are.same({ "agy", "claude", "codex" }, config.agent_names())
 	end)
 
 	it("When preset list entries duplicate named agents Then explicit named config wins", function()
 		local config = require("agent_term.setup.runtime_config")
 		local opts = config.setup({
 			agents = {
-				"gemini",
-				gemini = {
-					preset = "gemini",
-					cmd = { "gemini", "--yolo" },
+				"agy",
+				agy = {
+					preset = "agy",
+					cmd = { "agy", "--yolo" },
 				},
 			},
 		})
 
-		assert.are.same({ "gemini", "--yolo" }, opts.agents.gemini.cmd)
+		assert.are.same({ "agy", "--yolo" }, opts.agents.agy.cmd)
 		assert.is_nil(opts.agents[1])
 	end)
 
@@ -143,28 +143,28 @@ describe("Given multi-agent configuration", function()
 			local config = require("agent_term.setup.runtime_config")
 			config.setup({
 				agents = {
-					gemini = { preset = "gemini" },
+					agy = { preset = "agy" },
 					codex = { preset = "codex" },
 				},
 			})
 
-			assert.are.equal("codex", config.active_agent)
+			assert.are.equal("agy", config.active_agent)
 		end
 	)
 
 	it("When a persisted active agent is valid Then it is loaded", function()
 		vim.fn.mkdir(vim.fn.fnamemodify(state_file(), ":h"), "p")
-		vim.fn.writefile({ "gemini" }, state_file())
+		vim.fn.writefile({ "agy" }, state_file())
 
 		local config = require("agent_term.setup.runtime_config")
 		config.setup({
 			agents = {
 				codex = { preset = "codex" },
-				gemini = { preset = "gemini" },
+				agy = { preset = "agy" },
 			},
 		})
 
-		assert.are.equal("gemini", config.active_agent)
+		assert.are.equal("agy", config.active_agent)
 		assert.are.same({}, notifications)
 	end)
 
@@ -176,11 +176,11 @@ describe("Given multi-agent configuration", function()
 		config.setup({
 			agents = {
 				codex = { preset = "codex" },
-				gemini = { preset = "gemini" },
+				agy = { preset = "agy" },
 			},
 		})
 
-		assert.are.equal("codex", config.active_agent)
+			assert.are.equal("agy", config.active_agent)
 		assert.are.equal(1, #notifications)
 		assert.match("Persisted active agent `missing` is no longer configured", notifications[1].msg)
 	end)
@@ -249,17 +249,17 @@ describe("Given multi-agent configuration", function()
 		config.setup({
 			agents = {
 				codex = { cmd = { "codex" } },
-				gemini = { cmd = { "gemini" } },
+				agy = { cmd = { "agy" } },
 			},
 		})
 		local original_executable = vim.fn.executable
 		vim.fn.executable = function(exe)
-			return exe == "gemini" and 1 or 0
+			return exe == "agy" and 1 or 0
 		end
 
-		assert.is_true(config.set_active_agent("gemini"))
-		assert.are.equal("gemini", config.active_agent)
-		assert.are.same({ "gemini" }, vim.fn.readfile(state_file()))
+		assert.is_true(config.set_active_agent("agy"))
+		assert.are.equal("agy", config.active_agent)
+		assert.are.same({ "agy" }, vim.fn.readfile(state_file()))
 
 		vim.fn.executable = original_executable
 	end)
@@ -269,7 +269,7 @@ describe("Given multi-agent configuration", function()
 		config.setup({
 			agents = {
 				codex = { cmd = { "codex" } },
-				gemini = { cmd = { "gemini" } },
+				agy = { cmd = { "agy" } },
 			},
 		})
 		local original_executable = vim.fn.executable
@@ -277,10 +277,10 @@ describe("Given multi-agent configuration", function()
 			return 0
 		end
 
-		assert.is_false(config.set_active_agent("gemini"))
-		assert.are.equal("codex", config.active_agent)
+			assert.is_false(config.set_active_agent("agy"))
+			assert.are.equal("agy", config.active_agent)
 		assert.are.equal(0, vim.fn.filereadable(state_file()))
-		assert.match("Agent command not found: gemini", notifications[#notifications].msg)
+		assert.match("Agent command not found: agy", notifications[#notifications].msg)
 
 		vim.fn.executable = original_executable
 	end)
