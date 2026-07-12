@@ -18,3 +18,5 @@ coverage/
 .luacov
 .luacov.stats.out
 /.agent-term/
+
+.agent-workspace

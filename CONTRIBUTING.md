@@ -5,7 +5,15 @@ behavioral intent and tests where the change affects user-visible behavior or sh
 
 ## Development Setup
 
-Prerequisites:
+Enter the reproducible development shell:
+
+```sh
+nix develop
+```
+
+It provides Neovim, Plenary, StyLua, Luacheck, LuaLS, VHS, ImageMagick, and FFmpeg.
+
+For a manual setup, install these prerequisites:
 
 - Neovim 0.12+
 - [`nvim-lua/plenary.nvim`](https://github.com/nvim-lua/plenary.nvim)
