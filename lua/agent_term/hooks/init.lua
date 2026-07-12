@@ -7,7 +7,7 @@ local M = {}
 local installers = {
 	codex = require("agent_term.hooks.installers.codex"),
 	claude = require("agent_term.hooks.installers.claude"),
-	gemini = require("agent_term.hooks.installers.gemini"),
+	agy = require("agent_term.hooks.installers.agy"),
 }
 
 local function command_name()

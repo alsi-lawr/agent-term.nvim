@@ -28,7 +28,7 @@ describe("Given Agent Term UI views", function()
 		config.setup({
 			agents = {
 				codex = { preset = "codex" },
-				gemini = { preset = "gemini" },
+				agy = { preset = "agy" },
 			},
 		})
 		state = require("agent_term.runtime.state")
@@ -57,7 +57,7 @@ describe("Given Agent Term UI views", function()
 
 	it("When opening and closing the float Then state is tracked per agent", function()
 		local codex_buf = track_buf(vim.api.nvim_create_buf(false, true))
-		local gemini_buf = track_buf(vim.api.nvim_create_buf(false, true))
+		local agy_buf = track_buf(vim.api.nvim_create_buf(false, true))
 
 		local first = float.open(codex_buf, "codex")
 		assert.is_true(vim.api.nvim_win_is_valid(first))
@@ -66,13 +66,13 @@ describe("Given Agent Term UI views", function()
 		local second = float.open(codex_buf, "codex")
 		assert.are.equal(first, second)
 
-		local gemini = float.open(gemini_buf, "gemini")
-		assert.are.equal(gemini, state.session("gemini").float_win)
-		assert.are_not.equal(first, gemini)
+		local agy = float.open(agy_buf, "agy")
+		assert.are.equal(agy, state.session("agy").float_win)
+		assert.are_not.equal(first, agy)
 
 		float.close("codex")
 		assert.is_nil(state.session("codex").float_win)
-		assert.are.equal(gemini, state.session("gemini").float_win)
+		assert.are.equal(agy, state.session("agy").float_win)
 	end)
 
 	it("When opening the native float Then its rounded frame and title identify the agent", function()

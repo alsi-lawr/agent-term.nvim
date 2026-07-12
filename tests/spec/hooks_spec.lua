@@ -102,6 +102,61 @@ describe("Given native agent hook installation", function()
 		end
 	)
 
+	it(
+		"When AgentTermInstallHooks runs for agy Then it installs PreInvocation hooks",
+		function()
+			local plugin = require("agent_term")
+			local hooks = require("agent_term.hooks")
+			plugin.setup({ agents = { agy = { preset = "agy" } } })
+
+			assert.is_true(hooks.install())
+			assert.are.equal(1, vim.fn.filereadable(path(".gemini/config/hooks.json")))
+			assert.are.equal(1, vim.fn.filereadable(path(".gemini/config/hooks/agent_term_context.py")))
+			assert.is_true(require("agent_term.setup.runtime_config").context().hook.enabled)
+
+			local hooks_config = read_json(path(".gemini/config/hooks.json"))
+			local handlers = hooks_config.hooks.PreInvocation
+			assert.is_not_nil(handlers)
+			assert.is_not_nil(handlers[1].command:match("%.gemini/config/hooks/agent_term_context%.py"))
+			assert.is_not_nil(handlers[1].command:match("%-term/context%.json"))
+		end
+	)
+
+	it(
+		"When the installed agy context script runs Then it emits PreInvocation injectSteps",
+		function()
+			local plugin = require("agent_term")
+			local hooks = require("agent_term.hooks")
+			plugin.setup({ agents = { agy = { preset = "agy" } } })
+			hooks.install()
+			vim.fn.mkdir(path(".agent-term"), "p")
+			vim.fn.writefile({
+				vim.json.encode({
+					version = 1,
+					kind = "buffer",
+					content = "file: /tmp/example.lua",
+				}),
+			}, path(".agent-term/context.json"))
+
+			local output = vim.fn.system({
+				"python3",
+				path(".gemini/config/hooks/agent_term_context.py"),
+				path(".agent-term/context.json"),
+				"{\"invocationNum\":0}",
+			})
+
+			assert.are.equal(0, vim.v.shell_error)
+			local payload = vim.json.decode(output)
+			assert.are.same({
+				injectSteps = {
+					{
+						userMessage = "file: /tmp/example.lua",
+					},
+				},
+			}, payload)
+		end
+	)
+
 	it("When global hook entries already exist Then install leaves config unchanged", function()
 		local plugin = require("agent_term")
 		local hooks = require("agent_term.hooks")
@@ -116,22 +171,6 @@ describe("Given native agent hook installation", function()
 		local second_mtime = vim.fn.getftime(hooks_path)
 		assert.are.equal(first_mtime, second_mtime)
 	end)
-
-	it(
-		"When AgentTermInstallHooks runs for Gemini Then it dispatches to the Gemini installer",
-		function()
-			local plugin = require("agent_term")
-			plugin.setup({ agents = { gemini = { preset = "gemini" } } })
-
-			vim.cmd.AgentTermInstallHooks()
-
-			local settings = read_json(path(".gemini/settings.json"))
-			local handler = settings.hooks.BeforeModel[1].hooks[1]
-			assert.are.equal("command", handler.type)
-			assert.is_not_nil(handler.command:match("%.gemini/hooks/agent_term_context%.py"))
-			assert.are.equal(1, vim.fn.filereadable(path(".gemini/hooks/agent_term_context.py")))
-		end
-	)
 
 	it(
 		"When installing hooks for an unsupported agent Then it warns and writes no hook files",

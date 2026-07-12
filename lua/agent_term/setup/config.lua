@@ -12,9 +12,9 @@ M.agent_presets = {
 		preset = "codex",
 		cmd = { "codex" },
 	},
-	gemini = {
-		preset = "gemini",
-		cmd = { "gemini" },
+	agy = {
+		preset = "agy",
+		cmd = { "agy" },
 	},
 	claude = {
 		preset = "claude",
@@ -39,9 +39,9 @@ local auto_resume_args = {
 		picker = { "resume" },
 		last = { "resume", "--last" },
 	},
-	gemini = {
-		picker = { "-r" },
-		last = { "-r", "latest" },
+	agy = {
+		picker = { "--continue" },
+		last = { "--continue" },
 	},
 	claude = {
 		picker = { "--resume" },

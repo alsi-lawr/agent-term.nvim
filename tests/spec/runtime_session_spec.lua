@@ -50,7 +50,7 @@ describe("Given Agent Term per-agent runtime sessions", function()
 		config.setup({
 			agents = {
 				codex = { preset = "codex" },
-				gemini = { preset = "gemini" },
+				agy = { preset = "agy" },
 			},
 		})
 		state = require("agent_term.runtime.state")
@@ -111,21 +111,21 @@ describe("Given Agent Term per-agent runtime sessions", function()
 		end
 
 		local codex_buf = session.ensure_session(nil, "codex")
-		local gemini_buf = session.ensure_session(nil, "gemini")
+		local agy_buf = session.ensure_session(nil, "agy")
 		local codex_again = session.ensure_session(nil, "codex")
 
 		assert.are.equal(codex_buf, codex_again)
-		assert.are_not.equal(codex_buf, gemini_buf)
+		assert.are_not.equal(codex_buf, agy_buf)
 		assert.are.equal(71, state.session("codex").job_id)
-		assert.are.equal(72, state.session("gemini").job_id)
+		assert.are.equal(72, state.session("agy").job_id)
 		assert.are.same({ "codex" }, starts[1])
-		assert.are.same({ "gemini" }, starts[2])
+		assert.are.same({ "agy" }, starts[2])
 	end)
 
 	it("When sending text Then it targets the active agent session", function()
 		local sent
-		config.active_agent = "gemini"
-		state.session("gemini").job_id = 99
+		config.active_agent = "agy"
+		state.session("agy").job_id = 99
 		vim.fn.jobwait = function(ids, _)
 			return ids[1] == 99 and { -1 } or { 0 }
 		end
@@ -140,17 +140,17 @@ describe("Given Agent Term per-agent runtime sessions", function()
 	it("When killing an agent Then unrelated agent sessions survive", function()
 		local stopped
 		state.session("codex").job_id = 101
-		state.session("gemini").job_id = 202
+		state.session("agy").job_id = 202
 		vim.fn.jobstop = function(job_id)
 			stopped = job_id
 			return 1
 		end
 
-		session.kill("gemini")
+		session.kill("agy")
 
 		assert.are.equal(202, stopped)
 		assert.are.equal(101, state.session("codex").job_id)
-		assert.is_nil(state.session("gemini").job_id)
+		assert.is_nil(state.session("agy").job_id)
 	end)
 
 	it("When auto-resume is configured per agent Then startup uses that agent's mode", function()
@@ -162,8 +162,8 @@ describe("Given Agent Term per-agent runtime sessions", function()
 					cmd = { "codex", "--model", "gpt-5.4-mini" },
 					auto_resume = "last",
 				},
-				gemini = {
-					preset = "gemini",
+				agy = {
+					preset = "agy",
 					auto_resume = "picker",
 				},
 				custom = {
@@ -181,11 +181,11 @@ describe("Given Agent Term per-agent runtime sessions", function()
 		end
 
 		session.ensure_session(nil, "codex")
-		session.ensure_session(nil, "gemini")
+		session.ensure_session(nil, "agy")
 		session.ensure_session(nil, "custom")
 
 		assert.are.same({ "codex", "--model", "gpt-5.4-mini", "resume", "--last" }, starts[1])
-		assert.are.same({ "gemini", "-r" }, starts[2])
+		assert.are.same({ "agy", "--continue" }, starts[2])
 		assert.are.same({ "my-agent" }, starts[3])
 	end)
 end)

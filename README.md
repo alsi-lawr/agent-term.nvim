@@ -34,7 +34,7 @@
     <td><strong>Lightweight context</strong><br />Send buffer, selection, and diagnostics metadata without dumping full contents.</td>
   </tr>
   <tr>
-    <td><strong>Agent presets</strong><br />Start quickly with Codex, Gemini, Claude, Aider, Copilot, or Opencode.</td>
+    <td><strong>Agent presets</strong><br />Start quickly with Codex, agy, Claude, Aider, Copilot, or Opencode.</td>
     <td><strong>Custom agents</strong><br />Run any compatible interactive terminal command.</td>
     <td><strong>Automatic resume</strong><br />Optionally start supported presets through a picker or last-session command.</td>
   </tr>
@@ -47,7 +47,7 @@ The default agent is Codex. Presets are best-effort defaults for common terminal
 Most Neovim AI plugins abstract agents behind a shared chat UI. `agent-term.nvim` takes the
 opposite approach: it keeps each agent's real terminal interface inside Neovim.
 
-That means Codex, Claude, Gemini, Aider, Copilot, OpenCode, and other terminal agents keep their
+That means Codex, Claude, agy, Aider, Copilot, OpenCode, and other terminal agents keep their
 own slash commands, menus, model switching, permission flows, hooks, highlighting/autocomplete,
 and session behavior when supported by the agent TUI.
 
@@ -154,9 +154,9 @@ require("agent_term").setup({
   agents = {
     "claude",
     "codex",
-    gemini = {
-      preset = "gemini",
-      cmd = { "gemini" },
+    agy = {
+      preset = "agy",
+      cmd = { "agy" },
     },
     custom = {
       cmd = { "my-agent" },
@@ -167,12 +167,12 @@ require("agent_term").setup({
 ```
 
 String list entries are shorthand for preset-only agents. The example above creates named `claude`
-and `codex` agents from their presets, while `gemini` and `custom` use explicit configuration.
+and `codex` agents from their presets, while `agy` and `custom` use explicit configuration.
 
 Switch the active agent at runtime without editing config:
 
 ```vim
-:AgentTermSwitch gemini
+:AgentTermSwitch agy
 :AgentTermSwitch codex
 ```
 
@@ -181,7 +181,7 @@ agent names only. `:AgentTermSwitch! <name>` kills and recreates only the target
 normal switching never kills unrelated agents.
 
 <p align="center">
-  <img src="docs/assets/agent-switching-demo.gif" alt="agent-term.nvim switching between Codex and Gemini agents" width="900" />
+  <img src="docs/assets/agent-switching-demo.gif" alt="agent-term.nvim switching between Codex and agy agents" width="900" />
 </p>
 
 Per-agent `preset`, `cmd`, `auto_resume`, and `context` settings are applied when that agent creates
@@ -225,7 +225,7 @@ caveats are documented in [docs/agents.md](docs/agents.md).
 | Preset | Command | Hook installer support | Auto-resume picker | Auto-resume last |
 | --- | --- | --- | --- | --- |
 | `codex` | `codex` | paste; native hook install supported | `codex resume` | `codex resume --last` |
-| `gemini` | `gemini` | paste; native hook install supported | `gemini -r` | `gemini -r latest` |
+| `agy` | `agy` | native hook install supported (PreInvocation) | `agy --continue` | `agy --continue` |
 | `claude` | `claude` | paste; native hook install supported | `claude --resume` | `claude --continue` |
 | `aider` | `aider` | paste | unavailable | `aider --restore-chat-history` |
 | `copilot` | `copilot` | paste | `copilot --resume` | `copilot --continue` |
@@ -316,7 +316,7 @@ Optional hook integration writes the latest context payload to `agents.<name>.co
 `:AgentTermInstallHooks` to install supported native hooks for the active agent.
 
 Hook installation is explicit. Normal setup does not modify project or user agent config files.
-Codex, Claude, and Gemini support native hook installation. Aider, Copilot, and Opencode stay
+Codex, Claude, and agy support native hook installation. Aider, Copilot, and Opencode stay
 paste-only unless you explicitly configure a verified native hook integration.
 
 If the active agent is not running, context commands open the configured `agents.<name>.context.target_view`. The default

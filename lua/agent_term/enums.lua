@@ -18,7 +18,7 @@ M.panel_position = {
 
 M.agent = {
 	CODEX = "codex",
-	GEMINI = "gemini",
+	AGY = "agy",
 	CLAUDE = "claude",
 	AIDER = "aider",
 	COPILOT = "copilot",
