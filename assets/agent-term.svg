@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" role="img" aria-labelledby="title description">
+  <title id="title">agent-term.nvim</title>
+  <desc id="description">A coding-agent face running inside a terminal window.</desc>
+  <defs>
+    <linearGradient id="agent" x1="57" y1="72" x2="198" y2="193" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#57a143"/>
+      <stop offset="1" stop-color="#39c5cf"/>
+    </linearGradient>
+  </defs>
+  <rect x="18" y="18" width="220" height="220" rx="48" fill="#101820"/>
+  <rect x="38" y="48" width="180" height="160" rx="28" fill="#18232c" stroke="#34414b" stroke-width="6"/>
+  <circle cx="61" cy="71" r="6" fill="#57a143"/>
+  <circle cx="81" cy="71" r="6" fill="#39c5cf"/>
+  <circle cx="101" cy="71" r="6" fill="#52606b"/>
+  <path d="M128 92V79" stroke="#39c5cf" stroke-width="7" stroke-linecap="round"/>
+  <circle cx="128" cy="73" r="8" fill="#39c5cf"/>
+  <rect x="68" y="94" width="120" height="76" rx="29" fill="#101820" stroke="url(#agent)" stroke-width="9"/>
+  <rect x="57" y="116" width="12" height="31" rx="6" fill="#57a143"/>
+  <rect x="187" y="116" width="12" height="31" rx="6" fill="#39c5cf"/>
+  <circle cx="105" cy="128" r="9" fill="#57a143"/>
+  <circle cx="151" cy="128" r="9" fill="#39c5cf"/>
+  <path d="M108 150c12 9 28 9 40 0" fill="none" stroke="#f0f6fc" stroke-width="7" stroke-linecap="round"/>
+  <path d="M58 184l13 10-13 10M83 204h24" fill="none" stroke="#f0f6fc" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M128 190h45" stroke="#52606b" stroke-width="7" stroke-linecap="round"/>
+  <circle cx="190" cy="190" r="9" fill="#57a143"/>
+</svg>

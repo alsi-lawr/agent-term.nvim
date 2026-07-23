@@ -1,6 +1,11 @@
 <div align="center">
 
+<img src="assets/agent-term.svg" width="128" height="128" alt="agent-term.nvim logo">
+
 # agent-term.nvim
+
+[![CI](https://github.com/alsi-lawr/agent-term.nvim/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/alsi-lawr/agent-term.nvim/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/alsi-lawr/agent-term.nvim?display_name=tag&sort=semver)](https://github.com/alsi-lawr/agent-term.nvim/releases/latest)
 
 <p align="center">
   <img src="docs/assets/demo.webp" alt="agent-term.nvim demo" width="900" />
